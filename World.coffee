@@ -32,7 +32,7 @@ EMPTY    = 0
 MUSHROOM = 1
 ROCK     = 2
 
-MAX_MUSHROOMS = 200
+MAX_MUSHROOMS = 20
 MAX_DWARFS    = 33  # Один гном запасной :3
 
 class World
@@ -45,13 +45,14 @@ class World
        for y in [0...@H]
            @map[y] = []
            for x in [0...@W]
-               @map[x][y] = 0
+               @map[y][x] = if Math.random()>0.75 then ROCK else EMPTY
+              
 
     # Тик мира
     update: ->
         @grow_mushroms()
         # все гномы мира
-        dwarfs = [].concat.apply([], colonies)
+        dwarfs = [].concat.apply([], @colonies)
         # перемешиваем случайным образом
         for d, i in dwarfs
             j = Math.random()*dwarfs.length|0
@@ -60,15 +61,15 @@ class World
             d.update(@)
             
     # новая колония
-    add_colony:(ai)->
+    add_ai:(ai)->
         # id колонии
-        cid = colonies.length
+        colony_id = @colonies.length
         colony = []
-        x = Math.rand()*W|0
-        y = Math.rand()*H|0
-        for id in [1..max_dwarws]
+        x = Math.random()*@W|0
+        y = Math.random()*@H|0
+        for dwarf_id in [1..MAX_DWARFS]
             [xd, yd] = @get_nearest_free_place(x, y)
-            dwarf = new Dwarf(cid, id, ai, xd, yd)
+            dwarf = new Dwarf(@, colony_id, dwarf_id, ai, xd, yd)
             @set_element_at xd, yd, dwarf
             colony.push dwarf
 
@@ -81,7 +82,7 @@ class World
         y%=@H
         x=@W+x if x<0
         y=@H+y if y<0
-        map[x][y]=e
+        @map[y][x] = e
         
     # Получение объекта мира по координатам
     get_element_at:(x, y)->
@@ -89,18 +90,19 @@ class World
         y%=@H
         x=@W+x if x<0
         y=@H+y if y<0
-        map[x][y]
+        @map[y][x]
 
     # Ближайшее пустое место вокруг точки
     get_nearest_free_place: (x, y)->
+
         e = @get_element_at x, y
         return [x, y] if e is EMPTY
         
         for r in [1..20]
-            steps = r*3
-            for a in [0...r]
-                x1 = (x+Math.sin(Math.PI*2*r/steps)*r)|0
-                y1 = (y+Math.cos(Math.PI*2*r/steps)*r)|0
+            steps = r*Math.PI
+            for a in [0...steps]
+                x1 = (x+Math.sin(a*Math.PI*2/steps)*r)|0
+                y1 = (y+Math.cos(a*Math.PI*2/steps)*r)|0
                 e = @get_element_at x1, y1
                 return [x1, y1] if e is EMPTY
 
@@ -115,7 +117,7 @@ class World
     #    654      .   6
     #             ..987
     #     S         S
-    get_ellements_arround: (x, y, o)->
+    get_elements_arround: (x, y, o)->
         elements = []
         # N
         for i in [0..d]
@@ -136,17 +138,17 @@ class World
         elements
             
     # Элементы вокруг точки квадратная матрица 2d+1 x 2d+1
-    get_ellements_rect:(x,y,d)->
+    get_elements_rect:(x, y, d)->
         elements = []
         for i in [-d..d]
             for j in [-d..d]
-                elements.push @get_elements_at x, y
+                elements.push @get_element_at x, y
 
         elements
 
     # Случайное пустое место на карте   
     get_random_free_place: ->
-        for i in [0...1000]
+        for i in [0...100]
             x = Math.random()*@W|0
             y = Math.ranodm()*@H|0
             e = @get_element_at x, y
@@ -155,11 +157,53 @@ class World
 
     # Выращиваем грибочки     
     grow_mushroms: ->
-        while @mushrom_cnt<MAX_MUSROMS
+        while @mushrom_cnt<MAX_MUSHROOMS
             [x,y] = @get_random_free_place()    
-            @set_element_at(x, y, MUSHROM)
+            @set_element_at(x, y, MUSHROOM)
             @mushroms_cnt++
 
+    log:->
+       w = (t)->process.stdout.write t
+       dwarf_colors = ["FgRed", "FgGreen", "FgYellow", "FgBlue", "FgMagenta", "FgCyan"]
+       # Очистка термианала
+       w '\x1B[2J\x1B[0f\u001b[0;0H'
+       for r in @map
+           for c in r
+               switch c
+                   when 0 then w '.'
+                   when 1 then w '~'
+                   when 2 then w '#'
+                   else
+                       dwarf_color = terminal_colors[dwarf_colors[c.colony_id%dwarf_colors.length]]
+                       w "#{dwarf_color}@#{terminal_colors.Reset}"
+           w '\n'
+
+terminal_colors =
+    Reset      : "\x1b[0m"
+    Bright     : "\x1b[1m"
+    Dim        : "\x1b[2m"
+    Underscore : "\x1b[4m"
+    Blink      : "\x1b[5m"
+    Reverse    : "\x1b[7m"
+    Hidden     : "\x1b[8m"
+
+    FgBlack    : "\x1b[30m"
+    FgRed      : "\x1b[31m"
+    FgGreen    : "\x1b[32m"
+    FgYellow   : "\x1b[33m"
+    FgBlue     : "\x1b[34m"
+    FgMagenta  : "\x1b[35m"
+    FgCyan     : "\x1b[36m"
+    FgWhite    : "\x1b[37m"
+
+    BgBlack    : "\x1b[40m"
+    BgRed      : "\x1b[41m"
+    BgGreen    : "\x1b[42m"
+    BgYellow   : "\x1b[43m"
+    BgBlue     : "\x1b[44m"
+    BgMagenta  : "\x1b[45m"
+    BgCyan     : "\x1b[46m"
+    BgWhite    : "\x1b[47m"
 
 # Цена действия
 #          hl  en  st 
@@ -186,26 +230,37 @@ action_costs =
     fw:   [ 0, -2, -2] # .......... восток
     fe:   [ 0, -2, -2] # .......... юг
     fs:   [ 0, -2, -2] # .......... запад
-    
+
 
 class Dwarf
 
     @vision: 5
     
-    contsructor:(@ai, @id, @x, @y)->
-        
-        inventory = [MUSHROM, MUSHROM, MUSHROM]
-
+    constructor:(@world, @colony_id, @dwarf_id, @ai, @x, @y)->
+        @inv     = [MUSHROOM, MUSHROOM, MUSHROOM]
         @heath   = 100
         @energy  = 100
         @satiety = 100
-    
-    # ai must return an action
-    ai: undefined
+        
+    # Тик гнома
+    update:->
+
+        env = @world.get_elements_rect @x, @y, Dwarf.vision
+        # Интроспекция — метод углубленного исследования и познания моментов собственной активности:
+        # отдельных мыслей, образов, чувств, переживаний, актов мышления как деятельности разума.
+        introspection =
+            id: @id
+            hl: @health
+            en: @energy
+            st: @satiety
+            inv: @inv.slice(0)
+            env: env
+            
+        @do_action @ai? introspection
     
     do_action:(a)->
-       a = "rest" uless a? or action_costs[a]?
-       cost = actions_costs[a]
+       a = "rest" unless a? or action_costs[a]?
+       cost = action_costs[a]
        
        if cost?
            @health  += cost[0]
@@ -219,16 +274,5 @@ class Dwarf
           return false
        
        true
-        
-       
-class Simulation
 
-    constructor:(ais)->
-        @world = new World 100, 100
-        for ai in ais
-        world.add_colony ai
-        
-    update:->
-       world.update()
-
-
+module.exports = World
