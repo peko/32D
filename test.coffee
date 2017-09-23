@@ -1,15 +1,17 @@
 #!/usr/bin/coffee
 
 World = require "./World"
-
-world = new World 50, 50
-
+world = new World 80, 40
 
 # Все время спит
 ai1 = (dwarf)->"rest"
 
-# Идет на север
-ai2 = (dwarf)->"n"
+# Marшируем туда/сюда
+ai2_dir = "n"
+ai2 = (dwarf)->
+    if Math.random()>0.99
+        ai2_dir = ["n", "e", "s", "w", "eat", "rest"][Math.random()*6|0]
+    ai2_dir
 
 # Рандомно ходит
 ai3 = (dwarf)->
@@ -20,8 +22,9 @@ world.add_ai ai1
 world.add_ai ai2
 world.add_ai ai3
 
+cnt=0
 tick = ->
     world.update()
     world.log()
-    
-setInterval tick, 1000
+
+setInterval tick, 100

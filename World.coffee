@@ -28,16 +28,16 @@ env:   - массив (VISION*2+1 x VISION*2+1]
       hl   : 0..100
 ###
 
+terminal = require "./terminal"
+cfg      = require "./config"
+
 EMPTY    = 0
 MUSHROOM = 1
 ROCK     = 2
 
-MAX_MUSHROOMS = 20
-MAX_DWARFS    = 33  # Один гном запасной :3
-
 class World
 
-    musrom_cnt: 0
+    mushroom_cnt: 0
     constructor: (@W, @H)->
        @colonies = []
        @mushroms = []
@@ -45,20 +45,21 @@ class World
        for y in [0...@H]
            @map[y] = []
            for x in [0...@W]
-               @map[y][x] = if Math.random()>0.75 then ROCK else EMPTY
-              
+               @map[y][x] = if Math.random()>0.85 then ROCK else EMPTY
+       @grow_mushrooms()
 
     # Тик мира
     update: ->
-        @grow_mushroms()
+        @grow_mushrooms()
         # все гномы мира
         dwarfs = [].concat.apply([], @colonies)
         # перемешиваем случайным образом
         for d, i in dwarfs
             j = Math.random()*dwarfs.length|0
             [dwarfs[i], dwarfs[j]] = [dwarfs[j], dwarfs[i]]
+
         for d in dwarfs
-            d.update(@)
+            d?.update(@)
             
     # новая колония
     add_ai:(ai)->
@@ -67,11 +68,11 @@ class World
         colony = []
         x = Math.random()*@W|0
         y = Math.random()*@H|0
-        for dwarf_id in [1..MAX_DWARFS]
+        for dwarf_id in [0...cfg.max_dwarfs]
             [xd, yd] = @get_nearest_free_place(x, y)
             dwarf = new Dwarf(@, colony_id, dwarf_id, ai, xd, yd)
             @set_element_at xd, yd, dwarf
-            colony.push dwarf
+            colony[dwarf_id] = dwarf
 
         @colonies.push colony
         colony
@@ -82,10 +83,12 @@ class World
         y%=@H
         x=@W+x if x<0
         y=@H+y if y<0
+        e.x = x if e.x?
+        e.y = y if e.y?
         @map[y][x] = e
-        
+         
     # Получение объекта мира по координатам
-    get_element_at:(x, y)->
+    get_element_at: (x, y)->
         x%=@W
         y%=@H
         x=@W+x if x<0
@@ -106,8 +109,23 @@ class World
                 e = @get_element_at x1, y1
                 return [x1, y1] if e is EMPTY
 
+    # Перемещаем элемент если в заданном направлении
+    move_element_at: (x, y, d)->
+        return unless d in ["n", "e", "s", "w"]
+        delta =
+            n: x: 0, y:-1
+            e: x:+1, y: 0
+            s: x: 0, y:+1
+            w: x:-1, y: 0
+        d = delta[d]
 
-    move_element_at: ( x, y, d)->
+        e = @get_element_at x, y
+        t = @get_element_at x+d.x, y+d.y
+        return unless t is EMPTY
+        
+        @set_element_at x+d.x, y+d.y, e
+        @set_element_at     x,     y, EMPTY
+        
         
     # Элементы вокруг точки начиная с N
     # d=1 N     d=2 N  
@@ -138,7 +156,7 @@ class World
         elements
             
     # Элементы вокруг точки квадратная матрица 2d+1 x 2d+1
-    get_elements_rect:(x, y, d)->
+    get_elements_rect: (x, y, d)->
         elements = []
         for i in [-d..d]
             for j in [-d..d]
@@ -146,21 +164,39 @@ class World
 
         elements
 
+    # Элементы до которых можно дотянутся
+    get_reacheble_elements: (x, y)->[
+        @get_element_at(x  , y-1)  # N
+        @get_element_at(x+1, y  )  # E
+        @get_element_at(x  , y+1)  # S
+        @get_element_at(x-1, y  )] # W
+    search_reacheble_elements: (x, y, type)->
+        return [x  , y-1] if @get_element_at(x  , y-1) is type
+        return [x+1, y  ] if @get_element_at(x+1, y  ) is type
+        return [x  , y+1] if @get_element_at(x  , y+1) is type
+        return [x-1, y  ] if @get_element_at(x-1, y  ) is type
+        undefined
+        
     # Случайное пустое место на карте   
     get_random_free_place: ->
         for i in [0...100]
             x = Math.random()*@W|0
-            y = Math.ranodm()*@H|0
+            y = Math.random()*@H|0
             e = @get_element_at x, y
             return [x,y] if e is EMPTY
         return [0, 0]
-
+    
     # Выращиваем грибочки     
-    grow_mushroms: ->
-        while @mushrom_cnt<MAX_MUSHROOMS
-            [x,y] = @get_random_free_place()    
+    grow_mushrooms: ->
+        while @mushroom_cnt<cfg.max_mushrooms
+            [x,y] = @get_random_free_place()
             @set_element_at(x, y, MUSHROOM)
-            @mushroms_cnt++
+            @mushroom_cnt++
+
+    # Гном умер
+    remove_dwarf: (dwarf)->
+        @set_element_at dwarf.x, dwarf.y, EMPTY
+        delete @colonies[dwarf.colony_id][dwarf.dwarf_id]
 
     log:->
        w = (t)->process.stdout.write t
@@ -170,67 +206,22 @@ class World
        for r in @map
            for c in r
                switch c
-                   when 0 then w '.'
-                   when 1 then w '~'
-                   when 2 then w '#'
+                   when EMPTY    then w '.'
+                   when MUSHROOM then w 'o'
+                   when ROCK     then w '\x1b[47m\x1b[2m%\x1b[0m'
                    else
-                       dwarf_color = terminal_colors[dwarf_colors[c.colony_id%dwarf_colors.length]]
-                       w "#{dwarf_color}@#{terminal_colors.Reset}"
+                       dwarf_color = terminal.colors[dwarf_colors[c.colony_id%dwarf_colors.length]]
+                       w "#{dwarf_color}@#{terminal.colors.Reset}"
            w '\n'
-
-terminal_colors =
-    Reset      : "\x1b[0m"
-    Bright     : "\x1b[1m"
-    Dim        : "\x1b[2m"
-    Underscore : "\x1b[4m"
-    Blink      : "\x1b[5m"
-    Reverse    : "\x1b[7m"
-    Hidden     : "\x1b[8m"
-
-    FgBlack    : "\x1b[30m"
-    FgRed      : "\x1b[31m"
-    FgGreen    : "\x1b[32m"
-    FgYellow   : "\x1b[33m"
-    FgBlue     : "\x1b[34m"
-    FgMagenta  : "\x1b[35m"
-    FgCyan     : "\x1b[36m"
-    FgWhite    : "\x1b[37m"
-
-    BgBlack    : "\x1b[40m"
-    BgRed      : "\x1b[41m"
-    BgGreen    : "\x1b[42m"
-    BgYellow   : "\x1b[43m"
-    BgBlue     : "\x1b[44m"
-    BgMagenta  : "\x1b[45m"
-    BgCyan     : "\x1b[46m"
-    BgWhite    : "\x1b[47m"
-
-# Цена действия
-#          hl  en  st 
-action_costs =
-    rest: [+5, +5, -1] # Отдыхаем +5 здоровья +5 энергии  -1 сытость 
-    eat:  [+5, -1,+20] # Едим     +5 здоровья -1 энергии +20 сытость
-
-    grab: [ 0, -1, -1] # подбираем грибочек
-    drop: [ 0, -1, -1] # борсаем грибочек
-    
-    n:    [ 0, -1, -1] # идем на север
-    е:    [ 0, -1, -1] # ....... восток
-    s:    [ 0, -1, -1] # ....... юг
-    w:    [ 0, -1, -1] # ....... запад
-
-    dig:  [ 0, -2, -2] # копаем слуайное ближайшее место
-    dn:   [ 0, -2, -2] # копаем на север
-    dе:   [ 0, -2, -2] # ......... восток
-    ds:   [ 0, -2, -2] # ......... юг
-    dw:   [ 0, -2, -2] # ......... запад
-
-    fight:[ 0, -2, -2] # атакуем ближайшего гнома из другого клана
-    fn:   [ 0, -2, -2] # атакуем на север
-    fw:   [ 0, -2, -2] # .......... восток
-    fe:   [ 0, -2, -2] # .......... юг
-    fs:   [ 0, -2, -2] # .......... запад
-
+           
+       # Выводим гномов
+       for colony, i in @colonies
+           for d, j in colony
+               w "#{terminal.pos(@W+4+i*18, j+2)}"
+               if d?
+                   w "#{d.health} #{d.energy} #{d.satiety} #{d.action}"
+               else
+                   w "#{terminal.colors.FgRed}dead#{terminal.colors.Reset}"
 
 class Dwarf
 
@@ -238,7 +229,7 @@ class Dwarf
     
     constructor:(@world, @colony_id, @dwarf_id, @ai, @x, @y)->
         @inv     = [MUSHROOM, MUSHROOM, MUSHROOM]
-        @heath   = 100
+        @health  = 100
         @energy  = 100
         @satiety = 100
         
@@ -246,33 +237,64 @@ class Dwarf
     update:->
 
         env = @world.get_elements_rect @x, @y, Dwarf.vision
+
         # Интроспекция — метод углубленного исследования и познания моментов собственной активности:
         # отдельных мыслей, образов, чувств, переживаний, актов мышления как деятельности разума.
         introspection =
-            id: @id
-            hl: @health
-            en: @energy
-            st: @satiety
+            id : @id
+            hl : @health
+            en : @energy
+            st : @satiety
             inv: @inv.slice(0)
             env: env
             
         @do_action @ai? introspection
     
-    do_action:(a)->
-       a = "rest" unless a? or action_costs[a]?
-       cost = action_costs[a]
-       
-       if cost?
-           @health  += cost[0]
-           @energy  += cost[1]
-           @satiety += cost[2]
-      
-       if @satiety < 0
-          @health += @satiety
+    do_action: (@action)->
+        
+       @action = "rest" unless @action? or cfg.action_costs[@action]?
 
-       if @health <= 0
-          return false
+       cost = cfg.action_costs[@action]
        
-       true
+       # Обновляем параметры гнома 
+       if cost?
+            @update_stats cost
+
+       # Голодаем    
+       if @satiety <= 0
+           @health += @satiety
+
+       # Умираем
+       if @health <= 0
+           return @die()
+
+       # Нет сил - сделать ничего не можем
+       if @energy <=0
+           return
+           
+       switch @action
+           when "n", "e", "s", "w"
+               @world.move_element_at @x, @y, @action
+
+           when "eat"
+               mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
+               if mushroom_pos?
+                   @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
+                   @update_stats cfg.resource_costs[MUSHROOM]
+                   
+    update_stats: (cost)->
+       @health  += cost[0]
+       @energy  += cost[1]
+       @satiety += cost[2]
+       @health  = 100 if @health  > 100
+       @energy  = 100 if @energy  > 100
+       @satiety = 100 if @satiety > 100
+
+       @energy  = 0 if @energy  < 0
+
+    # Гном умер, просто удаляем его из мира
+    die: ->
+       @world.remove_dwarf @
+
 
 module.exports = World
