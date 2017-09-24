@@ -252,7 +252,7 @@ class Dwarf
     
     do_action: (@action)->
         
-       @action = "rest" unless @action? or cfg.action_costs[@action]?
+       @action = "rest" unless @action? and cfg.action_costs[@action]?
 
        cost = cfg.action_costs[@action]
        
