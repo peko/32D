@@ -35,7 +35,7 @@ EMPTY    = 0
 MUSHROOM = 1
 ROCK     = 2
 
-class World
+class Stollen
 
     mushroom_cnt: 0
     constructor: (@W, @H)->
@@ -312,4 +312,4 @@ class Dwarf
        @world.remove_dwarf @
 
 
-module.exports = World
+module.exports = Stollen
