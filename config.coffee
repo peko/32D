@@ -1,7 +1,7 @@
 cfg = module.exports = {}
 
 cfg.max_mushrooms = 300
-cfg.max_dwarfs    =  13  # Один гном запасной :3
+cfg.max_dwarfs    =  33  # Один гном запасной :3
 
 # Бонус от потребления ресурса
 cfg.resource_costs = []

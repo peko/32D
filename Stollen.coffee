@@ -40,7 +40,7 @@ class Stollen
 
     mushroom_cnt: 0
     constructor: (@W, @H)->
-       @colonies = []
+       @clans = []
        @mushroms = []
        @map = []
        for y in [0...@H]
@@ -56,7 +56,7 @@ class Stollen
         @grow_mushrooms()
         
         # все гномы мира
-        dwarfs = [].concat.apply([], @colonies)
+        dwarfs = [].concat.apply([], @clans)
 
         # Закон тапков
         # гномы дейтвуют в случайном порядке
@@ -71,18 +71,18 @@ class Stollen
     # новая колония
     add_ai:(ai)->
         # id колонии
-        colony_id = @colonies.length
-        colony = []
+        clan_id = @clans.length
+        clan = []
         x = Math.random()*@W|0
         y = Math.random()*@H|0
         for dwarf_id in [0...cfg.max_dwarfs]
             [xd, yd] = @get_nearest_free_place(x, y)
-            dwarf = new Dwarf(@, colony_id, dwarf_id, ai, xd, yd)
+            dwarf = new Dwarf(@, clan_id, dwarf_id, ai, xd, yd)
             @set_element_at xd, yd, dwarf
-            colony[dwarf_id] = dwarf
+            clan[dwarf_id] = dwarf
 
-        @colonies.push colony
-        colony
+        @clans.push clan
+        clan
 
     # Назначаение элемента карте
     set_element_at: (x, y, e)->
@@ -162,12 +162,13 @@ class Stollen
             
     # Элементы вокруг точки квадратная матрица 2d+1 x 2d+1
     get_elements_rect: (x, y, d)->
-        elements = []
+        rows = []
         for i in [-d..d]
+            cols = []
             for j in [-d..d]
-                elements.push @get_element_at x, y
-
-        elements
+                cols.push @get_element_at x+j, y+i
+            rows.push cols
+        rows
 
     # Элементы до которых можно дотянутся
     get_reacheble_elements: (x, y)->[
@@ -213,7 +214,7 @@ class Stollen
         # Грибочки остаются
         @mushroom_cnt -= dwarf.inv.length
         # Колония сиротеет
-        delete @colonies[dwarf.colony_id][dwarf.dwarf_id]
+        delete @clans[dwarf.clan_id][dwarf.dwarf_id]
 
     # Отладочный вывод
     log:->
@@ -227,14 +228,14 @@ class Stollen
                    when MUSHROOM then trm.write 'o'
                    when ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
                    else
-                       dwarf_clr = trm.clr[dwarf_colors[c.colony_id%dwarf_colors.length]]
+                       dwarf_clr = trm.clr[dwarf_colors[c.clan_id%dwarf_colors.length]]
                        trm.write "#{dwarf_clr}@#{trm.clr.Reset}"
            trm.write '\n'
            
-       # Выводим гномов
-       for colony, i in @colonies
+       # Выводим статы гномов
+       for clan, i in @clans
            j = 1
-           for d in colony
+           for d in clan
                if d?
                    j++
                    trm.pos(@W+4+i*18,j)
@@ -243,12 +244,19 @@ class Stollen
                    trm.write "#{Math.abs(d.satiety)}"
                    trm.write trm.clr.Reset
 
+       # Выводим одного зрение одного гнома
+       for clan, i in @clans
+           for d in clan
+               if d?
+                   d.log(i*Dwarf.vision*3, @H+2)
+                   break
+
 # Гном в вакуме
 class Dwarf
 
     @vision: 5
     
-    constructor:(@world, @colony_id, @dwarf_id, @ai, @x, @y)->
+    constructor:(@world, @clan_id, @dwarf_id, @ai, @x, @y)->
         @inv     = [MUSHROOM, MUSHROOM, MUSHROOM]
         @health  = 100
         @energy  = 100
@@ -261,8 +269,8 @@ class Dwarf
         for row, i in env
             for d, j in row
                 if d instanceof Dwarf
-                    r[j] =
-                        enemy : d.clan_id is not @clan_id
+                    row[j] =
+                        enemy : d.clan_id isnt @clan_id
                         health: d.health
                         
         # Интроспекция — метод углубленного исследования и познания моментов собственной активности:
@@ -354,7 +362,7 @@ class Dwarf
 
         # Бьём одного ближайшего гнома из чужего клана
         for d in dwarfs
-            if d.colony_id is not @colony_id
+            if d.clan_id is not @clan_id
                 d.health -= Math.random()*10|0
                 return
 
@@ -364,7 +372,7 @@ class Dwarf
             return
 
         for d in dwarfs
-            if d.colony_id is not @colony_id
+            if d.clan_id is not @clan_id
                 d.health -= Math.random()*10|0
                 return
 
@@ -382,12 +390,19 @@ class Dwarf
     valhalla: ->
         @world.move_to_valhalla @
 
-    log: (x,y)->
-        trm.pos x, y
+    # Вывод информации по гному
+    log: (x, y)->
         for row, i in @introspection.env
+            trm.pos x, y+i
             for e, j in row
-                trm.write e
-            trm.write '\n'
+                switch e
+                    when EMPTY    then trm.write "."
+                    when MUSHROOM then trm.write "o"
+                    when ROCK     then trm.write "#{trm.clr.BgWhite}##{trm.clr.Reset}"
+                    else
+                        if typeof(e) is 'object'
+                            clr = if e.enemy then trm.clr.FgRed else trm.clr.FgGreen
+                            trm.write "#{clr}@#{trm.clr.Reset}"
 
 
 module.exports = Stollen
