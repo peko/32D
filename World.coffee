@@ -219,7 +219,7 @@ class World
            for d, j in colony
                w "#{terminal.pos(@W+4+i*18, j+2)}"
                if d?
-                   w "#{d.health} #{d.energy} #{d.satiety} #{d.action}"
+                   w "#{d.health} #{d.energy} #{d.satiety} #{d.action} #{d.inv.length}"
                else
                    w "#{terminal.colors.FgRed}dead#{terminal.colors.Reset}"
 
@@ -262,7 +262,7 @@ class Dwarf
 
        # Голодаем    
        if @satiety <= 0
-           @health += @satiety
+           @health += @satiety*0.1|0
 
        # Умираем
        if @health <= 0
@@ -273,15 +273,30 @@ class Dwarf
            return
            
        switch @action
-           when "n", "e", "s", "w"
-               @world.move_element_at @x, @y, @action
+           when "n", "e", "s", "w"                  then @world.move_element_at @x, @y, @action
+           when "eat", "en", "ee", "es", "ew", "ei" then @eat @action
+           when "dig", "dn", "de", "ds", "dw"       then @dig @action            
+           when "fight", "an", "ae", "as", "aw"     then @fight @action
 
-           when "eat"
-               mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
-               if mushroom_pos?
-                   @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
-                   @update_stats cfg.resource_costs[MUSHROOM]
-                   
+    eat: (action)->
+        unless @eat_near()
+            @eat_from_inv()
+            
+    eat_near: ->
+        mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
+        if mushroom_pos?
+           @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
+           @update_stats cfg.resource_costs[MUSHROOM]
+           return true
+        false
+
+    eat_from_inv: ->
+        if @inv.length
+            @inv.pop()
+            @update_stats cfg.resource_costs[MUSHROOM]
+            return true
+        return false
+        
     update_stats: (cost)->
        @health  += cost[0]
        @energy  += cost[1]
