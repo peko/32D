@@ -45,7 +45,7 @@ class Stollen
        for y in [0...@H]
            @map[y] = []
            for x in [0...@W]
-               @map[y][x] = if Math.random()>0.85 then ROCK else EMPTY
+               @map[y][x] = if Math.random()>0.75 then ROCK else EMPTY
        @grow_mushrooms()
 
     # Тик мира
@@ -206,6 +206,7 @@ class Stollen
         @set_element_at dwarf.x, dwarf.y, EMPTY
         delete @colonies[dwarf.colony_id][dwarf.dwarf_id]
 
+    # Отладочный вывод
     log:->
        w = (t)->process.stdout.write t
        dwarf_colors = ["FgRed", "FgGreen", "FgYellow", "FgBlue", "FgMagenta", "FgCyan"]
@@ -281,30 +282,54 @@ class Dwarf
            return
            
        switch @action
-           when "n", "e", "s", "w"                  then @world.move_element_at @x, @y, @action
-           when "eat", "en", "ee", "es", "ew", "ei" then @eat @action
-           when "dig", "dn", "de", "ds", "dw"       then @dig @action            
-           when "fight", "an", "ae", "as", "aw"     then @fight @action
+           when           "n",  "e",  "s",  "w"       then @world.move_element_at @x, @y, @action
+           when "eat"  , "en", "ee", "es", "ew", "ei" then @eat   @action
+           when "dig"  , "dn", "de", "ds", "dw"       then @dig   @action
+           when "fight", "an", "ae", "as", "aw"       then @fight @action
+           when "grab" , "gn", "ge", "gs", "gw"       then @take  @action
 
+    # Съесть грибочек если есть рядом или из инвентаря      
     eat: (action)->
         unless @eat_near()
             @eat_from_inv()
             
+    # Съесть грибочек рядом        
     eat_near: ->
         mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
         if mushroom_pos?
            @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
            @update_stats cfg.resource_costs[MUSHROOM]
+           @world.mushroom_cnt--
            return true
         false
-
+        
+    # Съесть грибочек из инвентаря 
     eat_from_inv: ->
         if @inv.length
             @inv.pop()
             @update_stats cfg.resource_costs[MUSHROOM]
+            @world.mushroom_cnt--
             return true
         return false
         
+    # Взять грибочек с собой
+    take: ->
+        mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
+        if mushroom_pos?
+           @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
+           @inv.push MUSHROOM
+           return true
+        false
+        
+    # Копать породу
+    dig: (action)->
+        rock_pos = @world.search_reacheble_elements @x, @y, ROCK
+        if rock_pos?
+           @world.set_element_at rock_pos[0], rock_pos[1], EMPTY
+           return true
+        false
+
+    # Обновляем параметры гнома
     update_stats: (cost)->
        @health  += cost[0]
        @energy  += cost[1]

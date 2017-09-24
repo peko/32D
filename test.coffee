@@ -3,17 +3,17 @@
 Stollen = require "./Stollen"
 stollen = new Stollen 80, 40
 
-# Maршируем туда/сюда
-ai2_dir = "n"
-ai2 = (dwarf)->
-    if Math.random()>0.99
-        ai2_dir = ["n", "e", "s", "w", "eat", "rest"][Math.random()*6|0]
-    ai2_dir
-
-# Рандомно ходит
+base_actions = ["n", "e", "s", "w", "eat", "rest", "grab", "dig"]
+# Гномы ходят строем
+ai1_action = "n"
 ai1 = (dwarf)->
-    a = ["n", "w", "e", "s", "rest", "eat"]
-    a[Math.random()*a.length|0]
+    if Math.random()>0.99
+        ai1_action = base_actions[Math.random()*base_actions.length|0]
+    ai1_action
+
+# Кжаый гном ходит рандомно
+ai2 = (dwarf)->
+    base_actions[Math.random()*base_actions.length|0]
 
 stollen.add_ai ai1
 stollen.add_ai ai2
