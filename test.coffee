@@ -3,7 +3,7 @@
 Stollen = require "./Stollen"
 stollen = new Stollen 80, 40
 
-# Marшируем туда/сюда
+# Maршируем туда/сюда
 ai2_dir = "n"
 ai2 = (dwarf)->
     if Math.random()>0.99
