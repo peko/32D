@@ -50,14 +50,20 @@ class Stollen
 
     # Тик мира
     update: ->
+        
+        # Закон грибочков
         @grow_mushrooms()
+        
         # все гномы мира
         dwarfs = [].concat.apply([], @colonies)
-        # перемешиваем случайным образом
+
+        # Закон тапков
+        # гномы дейтвуют в случайном порядке
         for d, i in dwarfs
             j = Math.random()*dwarfs.length|0
             [dwarfs[i], dwarfs[j]] = [dwarfs[j], dwarfs[i]]
 
+        # Тик гномов 
         for d in dwarfs
             d?.update(@)
             
@@ -170,6 +176,8 @@ class Stollen
         @get_element_at(x+1, y  )  # E
         @get_element_at(x  , y+1)  # S
         @get_element_at(x-1, y  )] # W
+        
+    # Ищем ближайший объект
     search_reacheble_elements: (x, y, type)->
         return [x  , y-1] if @get_element_at(x  , y-1) is type
         return [x+1, y  ] if @get_element_at(x+1, y  ) is type
