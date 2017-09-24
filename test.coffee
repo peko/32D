@@ -3,7 +3,7 @@
 Stollen = require "./Stollen"
 stollen = new Stollen 80, 40
 
-base_actions = ["n", "e", "s", "w", "eat", "rest", "grab", "dig"]
+base_actions = ["n", "e", "s", "w", "eat", "rest", "grab", "dig", "fight"]
 # Гномы ходят строем
 ai1_action = "n"
 ai1 = (dwarf)->

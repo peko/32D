@@ -28,13 +28,14 @@ env:   - массив (VISION*2+1 x VISION*2+1]
       hl   : 0..100
 ###
 
-terminal = require "./terminal"
-cfg      = require "./config"
+trm = require "./terminal"
+cfg = require "./config"
 
 EMPTY    = 0
 MUSHROOM = 1
 ROCK     = 2
 
+# Штольня
 class Stollen
 
     mushroom_cnt: 0
@@ -87,8 +88,8 @@ class Stollen
     set_element_at: (x, y, e)->
         x%=@W
         y%=@H
-        x=@W+x if x<0
-        y=@H+y if y<0
+        x =@W+x if x<0
+        y =@H+y if y<0
         e.x = x if e.x?
         e.y = y if e.y?
         @map[y][x] = e
@@ -97,16 +98,14 @@ class Stollen
     get_element_at: (x, y)->
         x%=@W
         y%=@H
-        x=@W+x if x<0
-        y=@H+y if y<0
+        x =@W+x if x<0
+        y =@H+y if y<0
         @map[y][x]
 
     # Ближайшее пустое место вокруг точки
     get_nearest_free_place: (x, y)->
-
         e = @get_element_at x, y
         return [x, y] if e is EMPTY
-        
         for r in [1..20]
             steps = r*Math.PI
             for a in [0...steps]
@@ -119,18 +118,18 @@ class Stollen
     move_element_at: (x, y, d)->
         return unless d in ["n", "e", "s", "w"]
         delta =
-            n: x: 0, y:-1
-            e: x:+1, y: 0
-            s: x: 0, y:+1
-            w: x:-1, y: 0
+            n: [ 0, -1]
+            e: [+1,  0]
+            s: [ 0, +1]
+            w: [-1,  0]
         d = delta[d]
 
         e = @get_element_at x, y
-        t = @get_element_at x+d.x, y+d.y
+        t = @get_element_at x+d[0], y+d[1]
         return unless t is EMPTY
         
-        @set_element_at x+d.x, y+d.y, e
-        @set_element_at     x,     y, EMPTY
+        @set_element_at x+d[0], y+d[1], e
+        @set_element_at x     , y     , EMPTY
         
         
     # Элементы вокруг точки начиная с N
@@ -178,12 +177,18 @@ class Stollen
         @get_element_at(x-1, y  )] # W
         
     # Ищем ближайший объект
-    search_reacheble_elements: (x, y, type)->
-        return [x  , y-1] if @get_element_at(x  , y-1) is type
-        return [x+1, y  ] if @get_element_at(x+1, y  ) is type
-        return [x  , y+1] if @get_element_at(x  , y+1) is type
-        return [x-1, y  ] if @get_element_at(x-1, y  ) is type
+    get_nearest_object: (x, y, obj_id)->
+        for pos in [[0,-1], [+1,0], [0,+1], [-1,0]]
+            return [x+pos[0],y+pos[1]] if @get_element_at(x+pos[0], y+pos[1]) is obj_id
         undefined
+        
+    # Ищем ближайжих гномов
+    get_nearest_dwarfs: (x, y)->
+        dwarfs = []
+        for pos in [[0,-1], [+1,0], [0,+1], [-1,0]]
+            d = @get_element_at(x+pos[0], y+pos[1])
+            dwarfs.push d if d instanceof Dwarf
+        return dwarfs
         
     # Случайное пустое место на карте   
     get_random_free_place: ->
@@ -194,44 +199,51 @@ class Stollen
             return [x,y] if e is EMPTY
         return [0, 0]
     
-    # Выращиваем грибочки     
+    # Выращиваем грибочки
     grow_mushrooms: ->
         while @mushroom_cnt<cfg.max_mushrooms
             [x,y] = @get_random_free_place()
             @set_element_at(x, y, MUSHROOM)
             @mushroom_cnt++
 
-    # Гном умер
-    remove_dwarf: (dwarf)->
+    # Гном отправляет в Валхаллу
+    move_to_valhalla: (dwarf)->
+        # Гном исчезает с карты
         @set_element_at dwarf.x, dwarf.y, EMPTY
+        # Грибочки остаются
+        @mushroom_cnt -= dwarf.inv.length
+        # Колония сиротеет
         delete @colonies[dwarf.colony_id][dwarf.dwarf_id]
 
     # Отладочный вывод
     log:->
-       w = (t)->process.stdout.write t
        dwarf_colors = ["FgRed", "FgGreen", "FgYellow", "FgBlue", "FgMagenta", "FgCyan"]
        # Очистка термианала
-       w '\x1B[2J\x1B[0f\u001b[0;0H'
+       trm.reset()
        for r in @map
            for c in r
                switch c
-                   when EMPTY    then w '.'
-                   when MUSHROOM then w 'o'
-                   when ROCK     then w '\x1b[47m\x1b[2m%\x1b[0m'
+                   when EMPTY    then trm.write '.'
+                   when MUSHROOM then trm.write 'o'
+                   when ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
                    else
-                       dwarf_color = terminal.colors[dwarf_colors[c.colony_id%dwarf_colors.length]]
-                       w "#{dwarf_color}@#{terminal.colors.Reset}"
-           w '\n'
+                       dwarf_clr = trm.clr[dwarf_colors[c.colony_id%dwarf_colors.length]]
+                       trm.write "#{dwarf_clr}@#{trm.clr.Reset}"
+           trm.write '\n'
            
        # Выводим гномов
        for colony, i in @colonies
-           for d, j in colony
-               w "#{terminal.pos(@W+4+i*18, j+2)}"
+           j = 1
+           for d in colony
                if d?
-                   w "#{d.health} #{d.energy} #{d.satiety} #{d.action} #{d.inv.length}"
-               else
-                   w "#{terminal.colors.FgRed}dead#{terminal.colors.Reset}"
+                   j++
+                   trm.pos(@W+4+i*18,j)
+                   trm.write "#{d.inv.length} #{d.health} #{d.energy} "
+                   trm.write trm.clr.FgRed if d.satiety < 0
+                   trm.write "#{Math.abs(d.satiety)}"
+                   trm.write trm.clr.Reset
 
+# Гном в вакуме
 class Dwarf
 
     @vision: 5
@@ -246,10 +258,16 @@ class Dwarf
     update:->
 
         env = @world.get_elements_rect @x, @y, Dwarf.vision
-
+        for row, i in env
+            for d, j in row
+                if d instanceof Dwarf
+                    r[j] =
+                        enemy : d.clan_id is not @clan_id
+                        health: d.health
+                        
         # Интроспекция — метод углубленного исследования и познания моментов собственной активности:
         # отдельных мыслей, образов, чувств, переживаний, актов мышления как деятельности разума.
-        introspection =
+        @introspection =
             id : @id
             hl : @health
             en : @energy
@@ -257,7 +275,7 @@ class Dwarf
             inv: @inv.slice(0)
             env: env
             
-        @do_action @ai? introspection
+        @do_action @ai? @introspection
     
     do_action: (@action)->
         
@@ -275,7 +293,7 @@ class Dwarf
 
        # Умираем
        if @health <= 0
-           return @die()
+           return @valhalla()
 
        # Нет сил - сделать ничего не можем
        if @energy <=0
@@ -295,7 +313,8 @@ class Dwarf
             
     # Съесть грибочек рядом        
     eat_near: ->
-        mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
+        mushroom_pos = @world.get_nearest_object @x, @y, MUSHROOM
+
         if mushroom_pos?
            @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
            @update_stats cfg.resource_costs[MUSHROOM]
@@ -314,7 +333,7 @@ class Dwarf
         
     # Взять грибочек с собой
     take: ->
-        mushroom_pos = @world.search_reacheble_elements @x, @y, MUSHROOM
+        mushroom_pos = @world.get_nearest_object @x, @y, MUSHROOM
         if mushroom_pos?
            @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
            @inv.push MUSHROOM
@@ -323,26 +342,52 @@ class Dwarf
         
     # Копать породу
     dig: (action)->
-        rock_pos = @world.search_reacheble_elements @x, @y, ROCK
+        rock_pos = @world.get_nearest_object @x, @y, ROCK
         if rock_pos?
            @world.set_element_at rock_pos[0], rock_pos[1], EMPTY
            return true
         false
 
+    # Драться
+    fight: (action)->
+        dwarfs = @world.get_nearest_dwarfs @x, @y
+
+        # Бьём одного ближайшего гнома из чужего клана
+        for d in dwarfs
+            if d.colony_id is not @colony_id
+                d.health -= Math.random()*10|0
+                return
+
+        # Врагов нет, бьём любого ближайшего гнома
+        for d in dwarfs
+            d.health -= Math.random()*10|0
+            return
+
+        for d in dwarfs
+            if d.colony_id is not @colony_id
+                d.health -= Math.random()*10|0
+                return
+
     # Обновляем параметры гнома
     update_stats: (cost)->
-       @health  += cost[0]
-       @energy  += cost[1]
-       @satiety += cost[2]
-       @health  = 100 if @health  > 100
-       @energy  = 100 if @energy  > 100
-       @satiety = 100 if @satiety > 100
+        @health += cost[0]
+        @energy += cost[1]
+        @satiety+= cost[2]
+        @health  = 100 if @health  > 100
+        @energy  = 100 if @energy  > 100
+        @satiety = 100 if @satiety > 100
+        @energy  =   0 if @energy  <   0
 
-       @energy  = 0 if @energy  < 0
+    # Гном отправляется в Вальхаллу
+    valhalla: ->
+        @world.move_to_valhalla @
 
-    # Гном умер, просто удаляем его из мира
-    die: ->
-       @world.remove_dwarf @
+    log: (x,y)->
+        trm.pos x, y
+        for row, i in @introspection.env
+            for e, j in row
+                trm.write e
+            trm.write '\n'
 
 
 module.exports = Stollen
