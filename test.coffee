@@ -9,10 +9,10 @@ stollen = new Stollen 40, 20
 
 # Каждый гном ходит рандомно
 ai = require "./AIs/random"
+ai_fsm = require "./AIs/basic_fsm.coffee"
 
-stollen.add_ai ai
-stollen.add_ai ai
-stollen.add_ai ai
+# stollen.add_ai ai
+stollen.add_ai ai_fsm
 
 quit = 0
 

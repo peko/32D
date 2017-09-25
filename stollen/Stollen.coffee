@@ -46,7 +46,7 @@ class Stollen
        for y in [0...@H]
            @map[y] = []
            for x in [0...@W]
-               @map[y][x] = if Math.random()>0.75 then ROCK else EMPTY
+               @map[y][x] = if Math.random()>0.95 then ROCK else EMPTY
        @grow_mushrooms()
 
     # Тик мира
