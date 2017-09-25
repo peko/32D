@@ -1,18 +1,23 @@
 #!/usr/bin/coffee
-readline = require "readline"
+
 TIMEOUT = 10
 EXIT_KEY = 'q'
 
 Stollen = require "./stollen/Stollen"
-stollen = new Stollen 40, 20
+trm     = require "./stollen/terminal"
 
+stollen = new Stollen 
+    width        : 40
+    height       : 20
+    dwarfs_per_ai: 10
+    rocks_percent: 0.1
 
 # Каждый гном ходит рандомно
 ai = require "./AIs/random"
-ai_fsm = require "./AIs/basic_fsm.coffee"
 
-# stollen.add_ai ai
-stollen.add_ai ai_fsm
+stollen.add_ai ai
+stollen.add_ai ai
+stollen.add_ai ai
 
 quit = 0
 
@@ -34,3 +39,4 @@ tick = (() ->
 )
 
 setTimeout (tick), TIMEOUT
+trm.reset()

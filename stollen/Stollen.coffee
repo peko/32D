@@ -31,23 +31,28 @@ env:   - массив (VISION*2+1 x VISION*2+1]
 trm = require "./terminal"
 cfg = require "./config"
 
-EMPTY    = 0
-MUSHROOM = 1
-ROCK     = 2
-
 # Штольня
 class Stollen
 
-    mushroom_cnt: 0
-    constructor: (@W, @H)->
-       @clans = []
-       @mushroms = []
-       @map = []
-       for y in [0...@H]
-           @map[y] = []
-           for x in [0...@W]
-               @map[y][x] = if Math.random()>0.95 then ROCK else EMPTY
-       @grow_mushrooms()
+    mushroom_cnt :  0   # Счетчик грибочков
+    max_mushrooms:100   # Максиму гробочков
+    width        : 40   # Ширина штольни
+    height       : 20   # высота штольни
+    dwarfs_per_ai: 10   # Гномов в клане
+    rocks_percent: 0.5  # Плотность породы
+
+    constructor: (settings)->
+        @[n]=v for n, v of settings
+        @clans = []
+        @mushroms = []
+        @map = []
+        for y in [0...@height]
+            @map[y] = []
+            for x in [0...@width]
+                @map[y][x] = if Math.random() < @rocks_percent then cfg.ROCK else cfg.EMPTY
+        console.log @rocks_percent, cfg.ROCK, cfg.EMPTY
+
+        @grow_mushrooms()
 
     # Тик мира
     update: ->
@@ -73,10 +78,10 @@ class Stollen
         # id колонии
         clan_id = @clans.length
         clan = []
-        x = Math.random()*@W|0
-        y = Math.random()*@H|0
-        for dwarf_id in [0...cfg.max_dwarfs]
-            [xd, yd] = @get_nearest_free_place(x, y)
+        x = Math.random()*@width |0
+        y = Math.random()*@height|0
+        for dwarf_id in [0...@dwarfs_per_ai]
+            [xd, yd] = @get_nearest_free_place x, y
             dwarf = new Dwarf(@, clan_id, dwarf_id, ai, xd, yd)
             @set_element_at xd, yd, dwarf
             clan[dwarf_id] = dwarf
@@ -86,33 +91,33 @@ class Stollen
 
     # Назначаение элемента карте
     set_element_at: (x, y, e)->
-        x%=@W
-        y%=@H
-        x =@W+x if x<0
-        y =@H+y if y<0
+        x%= @width
+        y%= @height
+        x = @width+x if x<0
+        y = @height+y if y<0
         e.x = x if e.x?
         e.y = y if e.y?
         @map[y][x] = e
          
     # Получение объекта мира по координатам
     get_element_at: (x, y)->
-        x%=@W
-        y%=@H
-        x =@W+x if x<0
-        y =@H+y if y<0
+        x%= @width
+        y%= @height
+        x = @width+x  if x<0
+        y = @height+y if y<0
         @map[y][x]
 
     # Ближайшее пустое место вокруг точки
     get_nearest_free_place: (x, y)->
         e = @get_element_at x, y
-        return [x, y] if e is EMPTY
+        return [x, y] if e is cfg.EMPTY
         for r in [1..20]
             steps = r*Math.PI
             for a in [0...steps]
                 x1 = (x+Math.sin(a*Math.PI*2/steps)*r)|0
                 y1 = (y+Math.cos(a*Math.PI*2/steps)*r)|0
                 e = @get_element_at x1, y1
-                return [x1, y1] if e is EMPTY
+                return [x1, y1] if e is cfg.EMPTY
 
     # Перемещаем элемент если в заданном направлении
     move_element_at: (x, y, d)->
@@ -126,10 +131,10 @@ class Stollen
 
         e = @get_element_at x, y
         t = @get_element_at x+d[0], y+d[1]
-        return unless t is EMPTY
+        return unless t is cfg.EMPTY
         
         @set_element_at x+d[0], y+d[1], e
-        @set_element_at x     , y     , EMPTY
+        @set_element_at x     , y     , cfg.EMPTY
         
         
     # Элементы вокруг точки начиная с N
@@ -194,23 +199,23 @@ class Stollen
     # Случайное пустое место на карте   
     get_random_free_place: ->
         for i in [0...100]
-            x = Math.random()*@W|0
-            y = Math.random()*@H|0
+            x = Math.random()*@width|0
+            y = Math.random()*@height|0
             e = @get_element_at x, y
-            return [x,y] if e is EMPTY
+            return [x,y] if e is cfg.EMPTY
         return [0, 0]
     
     # Выращиваем грибочки
     grow_mushrooms: ->
-        while @mushroom_cnt<cfg.max_mushrooms
+        while @mushroom_cnt<@max_mushrooms
             [x,y] = @get_random_free_place()
-            @set_element_at(x, y, MUSHROOM)
+            @set_element_at(x, y, cfg.MUSHROOM)
             @mushroom_cnt++
 
     # Гном отправляет в Валхаллу
     move_to_valhalla: (dwarf)->
         # Гном исчезает с карты
-        @set_element_at dwarf.x, dwarf.y, EMPTY
+        @set_element_at dwarf.x, dwarf.y, cfg.EMPTY
         # Грибочки остаются
         @mushroom_cnt -= dwarf.inv.length
         # Колония сиротеет
@@ -225,9 +230,9 @@ class Stollen
        for r in @map
            for c in r
                switch c
-                   when EMPTY    then trm.write '.'
-                   when MUSHROOM then trm.write '+'
-                   when ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
+                   when cfg.EMPTY    then trm.write '.'
+                   when cfg.MUSHROOM then trm.write '+'
+                   when cfg.ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
                    else
                        dwarf_clr = trm.clr[dwarf_colors[c.clan_id%dwarf_colors.length]]
                        trm.write "#{dwarf_clr}@#{trm.clr.Reset}"
@@ -239,21 +244,21 @@ class Stollen
            for d in clan
                if d?
                    j++
-                   trm.pos(@W+4+i*18,j)
+                   trm.pos(@width+4+i*18,j)
                    trm.write "#{d.inv.length} #{d.health} #{d.energy} "
                    trm.write trm.clr.FgRed if d.satiety < 0
                    trm.write "#{Math.abs(d.satiety)}  "
                    trm.write trm.clr.Reset
-           trm.pos(@W+4+i*18,j+1)
+           trm.pos(@width+4+i*18,j+1)
            trm.write "              "
-           trm.pos(@W+4+i*18,j+2)
+           trm.pos(@width+4+i*18,j+2)
            trm.write "              "
 
        # Выводим одного зрение одного гнома
        for clan, i in @clans
            for d in clan
                if d?
-                   d.log(i*Dwarf.vision*3, @H+2)
+                   d.log(i*Dwarf.vision*3, @height+2)
                    break
 
 # Гном в вакуме
@@ -262,7 +267,7 @@ class Dwarf
     @vision: 5
     
     constructor:(@world, @clan_id, @dwarf_id, @ai, @x, @y)->
-        @inv     = [MUSHROOM, MUSHROOM, MUSHROOM]
+        @inv     = [cfg.MUSHROOM, cfg.MUSHROOM, cfg.MUSHROOM]
         @health  = 100
         @energy  = 100
         @satiety = 100
@@ -326,11 +331,11 @@ class Dwarf
             
     # Съесть грибочек рядом        
     eat_near: ->
-        mushroom_pos = @world.get_nearest_object @x, @y, MUSHROOM
+        mushroom_pos = @world.get_nearest_object @x, @y, cfg.MUSHROOM
 
         if mushroom_pos?
-           @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
-           @update_stats cfg.resource_costs[MUSHROOM]
+           @world.set_element_at mushroom_pos[0], mushroom_pos[1], cfg.EMPTY
+           @update_stats cfg.resource_costs[cfg.MUSHROOM]
            @world.mushroom_cnt--
            return true
         false
@@ -339,25 +344,25 @@ class Dwarf
     eat_from_inv: ->
         if @inv.length
             @inv.pop()
-            @update_stats cfg.resource_costs[MUSHROOM]
+            @update_stats cfg.resource_costs[cfg.MUSHROOM]
             @world.mushroom_cnt--
             return true
         return false
         
     # Взять грибочек с собой
     take: ->
-        mushroom_pos = @world.get_nearest_object @x, @y, MUSHROOM
+        mushroom_pos = @world.get_nearest_object @x, @y, cfg.MUSHROOM
         if mushroom_pos?
-           @world.set_element_at mushroom_pos[0], mushroom_pos[1], EMPTY
-           @inv.push MUSHROOM
+           @world.set_element_at mushroom_pos[0], mushroom_pos[1], cfg.EMPTY
+           @inv.push cfg.MUSHROOM
            return true
         false
         
     # Копать породу
     dig: (action)->
-        rock_pos = @world.get_nearest_object @x, @y, ROCK
+        rock_pos = @world.get_nearest_object @x, @y, cfg.ROCK
         if rock_pos?
-           @world.set_element_at rock_pos[0], rock_pos[1], EMPTY
+           @world.set_element_at rock_pos[0], rock_pos[1], cfg.EMPTY
            return true
         false
 
@@ -401,9 +406,9 @@ class Dwarf
             trm.pos x, y+i
             for e, j in row
                 switch e
-                    when EMPTY    then trm.write "."
-                    when MUSHROOM then trm.write "+"
-                    when ROCK     then trm.write "#{trm.clr.BgWhite}##{trm.clr.Reset}"
+                    when cfg.EMPTY    then trm.write "."
+                    when cfg.MUSHROOM then trm.write "+"
+                    when cfg.ROCK     then trm.write "#{trm.clr.BgWhite}##{trm.clr.Reset}"
                     else
                         if typeof(e) is 'object'
                             clr = if e.enemy then trm.clr.FgRed else trm.clr.FgGreen
