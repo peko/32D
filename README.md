@@ -91,8 +91,8 @@ fooling_arround_dwarf_ai = (dwarf)->["n", "e", "s", "w", "eat", "rest"][Math.ran
 
 
 
-[1]: https://github.com/peko/32D/blob/master/config.coffee#L12
-[2]: https://github.com/peko/32D/blob/master/config.coffee#L8
+[1]: https://github.com/peko/stollen/blob/master/stollen/config.coffee#L12
+[2]: https://github.com/peko/stollen/blob/master/stollen/config.coffee#L8
 [3]: https://ru.wikipedia.org/wiki/%D0%92%D0%B0%D0%BB%D1%8C%D1%85%D0%B0%D0%BB%D0%BB%D0%B0
 [4]: http://miningwiki.ru/wiki/%D0%A8%D0%B0%D1%85%D1%82%D1%91%D1%80%D1%81%D0%BA%D0%B8%D0%B9_%D0%B6%D0%B0%D1%80%D0%B3%D0%BE%D0%BD#.D0.A8
 
