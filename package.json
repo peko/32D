@@ -1,0 +1,13 @@
+{
+  "name": "Stollen",
+  "version": "0.0.1",
+  "description": "Dwarf ai",
+  "main": "test.coffee",
+  "license": "MIT",
+  "peerDependencies": {
+      "coffee-script" : "*"
+  },
+  "scripts": {
+    "start": "coffee ./test.coffee"
+  }
+}

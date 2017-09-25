@@ -89,6 +89,12 @@ fooling_arround_dwarf_ai = (dwarf)->["n", "e", "s", "w", "eat", "rest"][Math.ran
 
 **Собственно смысл всего этого проекта - получить качественный AI, не только позволяющий гномам выживать, но и побеждать другие кланы.**
 
+#Как запустить
+```
+npm install
+npm start
+```
+
 
 
 [1]: https://github.com/peko/stollen/blob/master/stollen/config.coffee#L12
