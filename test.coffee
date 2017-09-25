@@ -26,4 +26,5 @@ tick = ->
     stollen.update()
     stollen.log()
 
-setInterval tick, 200
+setInterval tick, 10
+

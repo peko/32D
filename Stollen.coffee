@@ -220,12 +220,13 @@ class Stollen
     log:->
        dwarf_colors = ["FgRed", "FgGreen", "FgYellow", "FgBlue", "FgMagenta", "FgCyan"]
        # Очистка термианала
-       trm.reset()
+       # trm.reset()
+       trm.pos(0,0)
        for r in @map
            for c in r
                switch c
                    when EMPTY    then trm.write '.'
-                   when MUSHROOM then trm.write 'o'
+                   when MUSHROOM then trm.write '+'
                    when ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
                    else
                        dwarf_clr = trm.clr[dwarf_colors[c.clan_id%dwarf_colors.length]]
@@ -234,15 +235,19 @@ class Stollen
            
        # Выводим статы гномов
        for clan, i in @clans
-           j = 1
+           j = 0
            for d in clan
                if d?
                    j++
                    trm.pos(@W+4+i*18,j)
                    trm.write "#{d.inv.length} #{d.health} #{d.energy} "
                    trm.write trm.clr.FgRed if d.satiety < 0
-                   trm.write "#{Math.abs(d.satiety)}"
+                   trm.write "#{Math.abs(d.satiety)}  "
                    trm.write trm.clr.Reset
+           trm.pos(@W+4+i*18,j+1)
+           trm.write "              "
+           trm.pos(@W+4+i*18,j+2)
+           trm.write "              "
 
        # Выводим одного зрение одного гнома
        for clan, i in @clans
@@ -397,7 +402,7 @@ class Dwarf
             for e, j in row
                 switch e
                     when EMPTY    then trm.write "."
-                    when MUSHROOM then trm.write "o"
+                    when MUSHROOM then trm.write "+"
                     when ROCK     then trm.write "#{trm.clr.BgWhite}##{trm.clr.Reset}"
                     else
                         if typeof(e) is 'object'
