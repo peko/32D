@@ -94,7 +94,10 @@ fooling_arround_dwarf_ai = (dwarf)->["n", "e", "s", "w", "eat", "rest"][Math.ran
 npm install
 npm start
 ```
-
+#Выключение
+```
+q
+```
 
 
 [1]: https://github.com/peko/stollen/blob/master/stollen/config.coffee#L12
