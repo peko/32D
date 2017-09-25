@@ -265,7 +265,9 @@ class Stollen
 class Dwarf
 
     @vision: 5
-    
+
+    rock_dig_probability: 0.2
+
     constructor:(@world, @clan_id, @dwarf_id, @ai, @x, @y)->
         @inv     = [cfg.MUSHROOM, cfg.MUSHROOM, cfg.MUSHROOM]
         @health  = 100
@@ -286,7 +288,7 @@ class Dwarf
         # Интроспекция — метод углубленного исследования и познания моментов собственной активности:
         # отдельных мыслей, образов, чувств, переживаний, актов мышления как деятельности разума.
         @introspection =
-            id : @id
+            id : @dwarf_id
             hl : @health
             en : @energy
             st : @satiety
@@ -361,7 +363,7 @@ class Dwarf
     # Копать породу
     dig: (action)->
         rock_pos = @world.get_nearest_object @x, @y, cfg.ROCK
-        if rock_pos?
+        if rock_pos? and Math.random() < @rock_dig_probability
            @world.set_element_at rock_pos[0], rock_pos[1], cfg.EMPTY
            return true
         false
