@@ -4,7 +4,7 @@ Stollen = require "./stollen/Stollen"
 trm     = require "./stollen/terminal"
 
 stollen = new Stollen 
-    width        :  80
+    width        :  40
     height       :  40
     max_mushrooms:  20
     dwarfs_per_ai:  15
@@ -21,6 +21,6 @@ tick = ->
     stollen.update()
     stollen.log()
 
-setInterval tick, 10
+setInterval tick, 50
 
 trm.reset()

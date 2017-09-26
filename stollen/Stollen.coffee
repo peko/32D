@@ -235,7 +235,12 @@ class Stollen
                    when cfg.ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
                    else
                        dwarf_clr = trm.clr[dwarf_colors[c.clan_id%dwarf_colors.length]]
-                       trm.write "#{dwarf_clr}@#{trm.clr.Reset}"
+                       dwarf_char = switch
+                           when c.action is 'rest'  then rnd ['z', 'Z']
+                           when c.action is 'eat'   then 'е'
+                           when c.action is 'fight' then rnd ['x','X','*','#','%']
+                           else                          '@'
+                       trm.write "#{dwarf_clr}#{dwarf_char}#{trm.clr.Reset}"
            trm.write '\n'
            
        # Выводим статы гномов
@@ -415,6 +420,10 @@ class Dwarf
                         if typeof(e) is 'object'
                             clr = if e.enemy then trm.clr.FgRed else trm.clr.FgGreen
                             trm.write "#{clr}@#{trm.clr.Reset}"
+# UTILS
 
+rnd = (array)->array[Math.random()*array.length|0]
+
+# EXPORT
 
 module.exports = Stollen
