@@ -4,8 +4,8 @@ Stollen = require "./stollen/Stollen"
 trm     = require "./stollen/terminal"
 
 stollen = new Stollen 
-    width        :  40
-    height       :  20
+    width        :  80
+    height       :  40
     max_mushrooms:  20
     dwarfs_per_ai:  15
     rocks_percent: 0.2
