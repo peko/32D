@@ -81,8 +81,6 @@ fsm =
                 when d.inv.length < 2           then fsm.HARVEST
                 when enemy_distance(d.env) > 20 then fsm.REST
                 else fsm.ATTACK
-                    
-trm = require "../stollen/terminal"
 
 
 center = undefined
@@ -221,11 +219,6 @@ module.exports = ->
         center?=dwarf.env[0].length*0.5|0
         state = dwarf_states[dwarf.id]
         state?= fsm.HARVEST
-        trm.pos 60, dwarf.id+1
         action = state.action dwarf
         dwarf_states[dwarf.id] = state.update dwarf
-
-        trm.pos 80, 1+dwarf.id
-        console.log "#{state.data} #{dwarf.hl} #{enemy_distance(dwarf.env)}            "
-
         return action

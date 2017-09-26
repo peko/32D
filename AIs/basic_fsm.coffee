@@ -54,9 +54,6 @@ fsm =
                 else fsm.HARVEST
             
 
-trm = require "../stollen/terminal"
-
-
 center = undefined
 # Сортированный список объектов заданного типа
 get_objects_by_type = (env, type)->
@@ -128,7 +125,6 @@ module.exports = ->
         center?=dwarf.env[0].length*0.5|0
         state = dwarf_states[dwarf.id]
         state?= fsm.HARVEST
-        trm.pos 60, dwarf.id+1
         action = state.action dwarf
         dwarf_states[dwarf.id] = state.update dwarf
         return action

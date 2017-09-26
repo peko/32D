@@ -19,7 +19,6 @@ win.on 'close', ->
 
 
 Stollen = require "./stollen/Stollen"
-trm     = require "./stollen/terminal"
 
 stollen = new Stollen 
     width        :  40

@@ -4,8 +4,8 @@ TIMEOUT = 10
 EXIT_KEY = 'q'
 
 Stollen = require "./stollen/Stollen"
-trm     = require "./stollen/terminal"
-
+{stollen_log} = require "./stollen/utils"
+    
 stollen = new Stollen 
     width        : 40
     height       : 20
@@ -25,18 +25,17 @@ process.stdin.setRawMode(true)
 process.stdin.resume
 process.stdin.setEncoding 'utf8'
  
-process.stdin.on('data', (chunk) ->
+process.stdin.on 'data', (chunk) ->
     if chunk == EXIT_KEY
         quit = 1
-)
 
-tick = (() ->
+
+tick = ()->
     stollen.update()
-    stollen.log()
+    stollen_log stollen
     if quit == 1 
         process.exit 0
-    setTimeout (tick), TIMEOUT
-)
+    setTimeout tick, TIMEOUT
 
-setTimeout (tick), TIMEOUT
-trm.reset()
+
+setTimeout tick, TIMEOUT

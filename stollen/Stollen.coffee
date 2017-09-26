@@ -28,7 +28,7 @@ env:   - массив (VISION*2+1 x VISION*2+1]
       hl   : 0..100
 ###
 
-trm = require "./terminal"
+
 cfg = require "./config"
 
 # Штольня
@@ -50,7 +50,6 @@ class Stollen
             @map[y] = []
             for x in [0...@width]
                 @map[y][x] = if Math.random() < @rocks_percent then cfg.ROCK else cfg.EMPTY
-        console.log @rocks_percent, cfg.ROCK, cfg.EMPTY
 
         @grow_mushrooms()
 
@@ -135,36 +134,7 @@ class Stollen
         
         @set_element_at x+d[0], y+d[1], e
         @set_element_at x     , y     , cfg.EMPTY
-        
-        
-    # Элементы вокруг точки начиная с N
-    # d=1 N     d=2 N  
-    #             ..123     
-    #    812      .   4
-    #  W 7@3 E   W. @ 5E
-    #    654      .   6
-    #             ..987
-    #     S         S
-    get_elements_around: (x, y, d)->
-        elements = []
-        # N
-        for i in [0..d]
-            elements.push @get_element_at x+i, y+d
-        # E
-        for i in [-d+1..d]
-            elements.push @get_element_at x+d, y+i
-        # S
-        for i in [-d+1..d]
-            elements.push @get_element_at x-i, y-d
-        # W
-        for i in [-d+1..d]
-            elements.push @get_element_at x-d, y-i
-        # N
-        for i in [-d+1..-1]
-            elements.push @get_element_at x+i, y+d
 
-        elements
-            
     # Элементы вокруг точки квадратная матрица 2d+1 x 2d+1
     get_elements_rect: (x, y, d)->
         rows = []
@@ -221,55 +191,11 @@ class Stollen
         # Колония сиротеет
         delete @clans[dwarf.clan_id][dwarf.dwarf_id]
 
-    # Отладочный вывод
-    log:->
-       dwarf_colors = ["FgRed", "FgGreen", "FgYellow", "FgBlue", "FgMagenta", "FgCyan"]
-       # Очистка термианала
-       # trm.reset()
-       trm.pos(0,0)
-       for r in @map
-           for c in r
-               switch c
-                   when cfg.EMPTY    then trm.write '.'
-                   when cfg.MUSHROOM then trm.write '+'
-                   when cfg.ROCK     then trm.write "#{trm.clr.BgWhite}/#{trm.clr.Reset}"
-                   else
-                       dwarf_clr = trm.clr[dwarf_colors[c.clan_id%dwarf_colors.length]]
-                       dwarf_char = switch
-                           when c.action is 'rest'  then rnd ['z', 'Z']
-                           when c.action is 'eat'   then 'е'
-                           when c.action is 'fight' then rnd ['x','X','*','#','%']
-                           else                          '@'
-                       trm.write "#{dwarf_clr}#{dwarf_char}#{trm.clr.Reset}"
-           trm.write '\n'
-           
-       # Выводим статы гномов
-       for clan, i in @clans
-           j = 0
-           for d in clan
-               if d?
-                   j++
-                   trm.pos(@width+4+i*18,j)
-                   trm.write "#{d.inv.length} #{d.health} #{d.energy} "
-                   trm.write trm.clr.FgRed if d.satiety < 0
-                   trm.write "#{Math.abs(d.satiety)}  "
-                   trm.write trm.clr.Reset
-           trm.pos(@width+4+i*18,j+1)
-           trm.write "              "
-           trm.pos(@width+4+i*18,j+2)
-           trm.write "              "
-
-       # Выводим одного зрение одного гнома
-       for clan, i in @clans
-           for d in clan
-               if d?
-                   d.log(i*Dwarf.vision*3, @height+2)
-                   break
 
 # Гном в вакуме
 class Dwarf
 
-    @vision: 5
+    vision: 5
 
     rock_dig_probability: 0.2
 
@@ -282,7 +208,7 @@ class Dwarf
     # Тик гнома
     update:->
 
-        env = @world.get_elements_rect @x, @y, Dwarf.vision
+        env = @world.get_elements_rect @x, @y, @vision
         for row, i in env
             for d, j in row
                 if d instanceof Dwarf
@@ -407,23 +333,5 @@ class Dwarf
     valhalla: ->
         @world.move_to_valhalla @
 
-    # Вывод информации по гному
-    log: (x, y)->
-        for row, i in @introspection.env
-            trm.pos x, y+i
-            for e, j in row
-                switch e
-                    when cfg.EMPTY    then trm.write "."
-                    when cfg.MUSHROOM then trm.write "+"
-                    when cfg.ROCK     then trm.write "#{trm.clr.BgWhite}##{trm.clr.Reset}"
-                    else
-                        if typeof(e) is 'object'
-                            clr = if e.enemy then trm.clr.FgRed else trm.clr.FgGreen
-                            trm.write "#{clr}@#{trm.clr.Reset}"
-# UTILS
-
-rnd = (array)->array[Math.random()*array.length|0]
-
-# EXPORT
 
 module.exports = Stollen

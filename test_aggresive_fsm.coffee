@@ -1,7 +1,7 @@
 #!/usr/bin/coffee
 
 Stollen = require "./stollen/Stollen"
-trm     = require "./stollen/terminal"
+{stollen_log} = require "./stollen/utils"
 
 stollen = new Stollen 
     width        :  40
@@ -20,8 +20,7 @@ stollen.add_ai ai_fsm_a()
 
 tick = ->
     stollen.update()
-    stollen.log()
+    stollen_log stollen
 
 setInterval tick, 50
 
-trm.reset()
