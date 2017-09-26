@@ -7,6 +7,9 @@ Win = sdl.window
 
 Img = sdl.image
 sprites = new Img "img/sprites.png"
+dwarf_sprites = []
+[0..1].map (i)-> [0..7].map (j)->dwarf_sprites.push [j,i]
+
 
 win = new Win
     background: 0
@@ -21,11 +24,11 @@ win.on 'close', ->
 Stollen = require "./stollen/Stollen"
 
 stollen = new Stollen 
-    width        :  40
-    height       :  40
+    width        :  32
+    height       :  32
     max_mushrooms:  20
-    dwarfs_per_ai:  35
-    rocks_percent: 0.2
+    dwarfs_per_ai:   8
+    rocks_percent: 0.5
 
 # Каждый гном ходит рандомно
 ai_fsm = require "./AIs/basic_fsm.coffee"
@@ -44,7 +47,7 @@ MUSHROOM = 1
 ROCK     = 2
 
 ss = 16
-sc =  1
+sc =  2
 draw = ->
 
     stollen.update()
@@ -55,10 +58,10 @@ draw = ->
     for r, y in stollen.map 
         for c, x in r
             sp = switch
-                when typeof c is'object' then [c.clan_id, 0]
-                when c is MUSHROOM       then [0, 1]
-                when c is ROCK           then [2, 1]
-                else  [1, 1]
+                when typeof c is'object' then dwarf_sprites[c.dwarf_id%dwarf_sprites.length]
+                when c is MUSHROOM       then [1, 2]
+                when c is ROCK           then [0, 2]
+                else  [2, 2]
                     
             ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x*ss*sc, y*ss*sc, ss*sc, ss*sc]
 
