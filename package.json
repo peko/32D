@@ -5,9 +5,12 @@
   "main": "test.coffee",
   "license": "MIT",
   "peerDependencies": {
-      "coffee-script" : "*"
+    "coffee-script": "*"
   },
   "scripts": {
     "start": "coffee ./test.coffee"
+  },
+  "dependencies": {
+    "node-sdl2": "^2.1.2"
   }
 }
