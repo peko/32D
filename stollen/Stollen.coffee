@@ -145,7 +145,7 @@ class Stollen
     #    654      .   6
     #             ..987
     #     S         S
-    get_elements_arround: (x, y, o)->
+    get_elements_around: (x, y, d)->
         elements = []
         # N
         for i in [0..d]
