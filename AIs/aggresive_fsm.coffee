@@ -35,54 +35,78 @@ fsm =
     REST:
         data  : "RST"
         action: (d)-> "rest"
-        update: (d)->
-            switch
-                when d.st < 25 then fsm.EAT
-                # when d.en is 100 and d.hl is 100 then fsm.HARVEST
-                when enemy_distance(d.env) < 10 then fsm.ATTACK
-                else fsm.REST
-   
+        update: (e)-> switch
+            when e.hungry    then fsm.EAT
+            when e.injurned and
+                 e.enemy_nearby then fsm.AVOID
+            when e.rested and
+                 e.healed       then fsm.HARVEST
+            when e.enemy_nearby then fsm.ATTACK
+            else                     fsm.REST
     EAT:
         data  : "EAT" 
         action: (d)-> "eat"
-        update: (d)->
-            switch
-                when d.inv.length > 0 and d.st isnt 100 then fsm.EAT
-                when enemy_distance(d.env) < 3          then fsm.ATACK
-                when d.inv.length < 2 then              fsm.HARVEST
-                else fsm.REST
+        update: (e)-> switch
+            when e.injurned and
+                 e.enemy_nearby then fsm.AVOID
+            when e.full         then fsm.HARVEST
+            when e.enemy_near   then fsm.ATTACK
+            else                     fsm.EAT
 
+           
     HARVEST:
         data  : "HRV"
         action: (d)-> harvest(d)
-        update: (d)->
-            switch
-                when enemy_distance(d.env) < 5 and d.inv.length > 4 then fsm.ATTACK
-                when d.inv.length >= 10     then fsm.REST
-                when d.st < 25              then fsm.EAT
-                when d.en < 25 or d.hl < 25 then fsm.REST
-                else fsm.HARVEST
-            
+        update: (e)-> switch
+            when e.hungry       then fsm.EAT
+            when e.tired        then fsm.REST
+            when e.injurned and
+                 e.enemy_nearby then fsm.AVOID 
+            when e.tired or
+                 e.wounded      then fsm.REST
+            else                     fsm.HARVEST
+                
     AVOID:
         data  : "AVD"
         action: (d)-> avoid(d)
-        update: (d)->
-            switch
-                when enemy_distance(d.env) > 3 then rnd [fsm.EAT, fsm.HARVEST, fsm.REST]
-                else fsm.AVOID
+        update: (e)-> switch
+            when e.hungry    then fsm.EAT
+            when e.tired     then fsm.REST
+            when e.enemy_far then fsm.REST
+            else                  fsm.AVOID
             
     ATTACK:
         data  : "FGT"
         action: (d)-> attack(d)
-        update: (d)->
-            switch
-                when d.hl < 25                  then fsm.AVOID
-                when d.en < 25                  then fsm.EAT
-                when d.inv.length < 2           then fsm.HARVEST
-                when enemy_distance(d.env) > 20 then fsm.REST
-                else fsm.ATTACK
+        update: (e)-> switch
+            when e.hungry   then fsm.EAT
+            when e.tired    then fsm.REST
+            when e.injurned then fsm.AVOID
+            else                 fsm.ATTACK
 
 
+extract_events = (d)->
+    ed = enemy_distance d.env
+    mc = d.inv.length
+    e =
+       healed  : d.hl > 90
+       wounded : d.hl < 75
+       injurned: d.hl < 25
+       
+       hungry: d.st < 25
+       full  : d.st > 80
+       
+       tired : d.en < 25
+       rested: d.en > 80
+       
+       low_supplies : mc < 2
+       full_supplies: mc > 8
+
+       no_enemies  : ed > 20
+       enemy_far   : 6 <= ed <= 20
+       enemy_nearby: 2 <= ed < 6
+       enemy_near  : ed < 1
+    
 center = undefined
 # Сортированный список объектов заданного типа
 # type может быть численной константой:
@@ -185,7 +209,7 @@ avoid = (dwarf)->
     
 # Ищем врага, пинаем врага
 attack = (dwarf)->
-    
+        
     # получаем ближайшего врага
     enemy = get_nearest_object dwarf.env, ["enemy", true]
 
@@ -220,5 +244,5 @@ module.exports = ->
         state = dwarf_states[dwarf.id]
         state?= fsm.HARVEST
         action = state.action dwarf
-        dwarf_states[dwarf.id] = state.update dwarf
+        dwarf_states[dwarf.id] = state.update extract_events dwarf
         return action

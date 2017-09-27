@@ -6,7 +6,7 @@ module.exports =
 
     resource_costs: [
         [   0,   0,    0 ] # empty
-        [ +25, +25, +100 ]]# mushroom
+        [  +5,  +5, +100 ]]# mushroom
     
     action_costs:
         rest: [+10, +10, -1] # Отдыхаем

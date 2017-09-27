@@ -35,7 +35,8 @@ cfg = require "./config"
 class Stollen
 
     mushroom_cnt :  0   # Счетчик грибочков
-    max_mushrooms:100   # Максиму гробочков
+    max_mushrooms:100   # Максимум гробочков
+    max_damage   : 25   # Максимальный урон
     width        : 40   # Ширина штольни
     height       : 20   # высота штольни
     dwarfs_per_ai: 10   # Гномов в клане
@@ -306,18 +307,14 @@ class Dwarf
         # Бьём одного ближайшего гнома из чужего клана
         for d in dwarfs
             if d.clan_id is not @clan_id
-                d.health -= Math.random()*10|0
+                d.health -= Math.random()*@max_damage|0
                 return
 
         # Врагов нет, бьём любого ближайшего гнома
         for d in dwarfs
-            d.health -= Math.random()*10|0
+            d.health -= Math.random()*@max_damage|0
             return
 
-        for d in dwarfs
-            if d.clan_id is not @clan_id
-                d.health -= Math.random()*10|0
-                return
 
     # Обновляем параметры гнома
     update_stats: (cost)->

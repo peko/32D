@@ -1,6 +1,6 @@
 #!/bin/coffee
 
-timeout = 100
+timeout = 50
 
 sdl = require "node-sdl2"
 
@@ -24,14 +24,14 @@ win.on 'close', ->
 Stollen = require "./stollen/Stollen"
 
 stollen = new Stollen 
-    width        :  32
-    height       :  32
+    width        :  16
+    height       :  16
     max_mushrooms:  20
-    dwarfs_per_ai:   8
+    dwarfs_per_ai:   3
     rocks_percent: 0.5
 
 # Каждый гном ходит рандомно
-ai_fsm = require "./AIs/basic_fsm.coffee"
+ai_fsm   = require "./AIs/basic_fsm.coffee"
 ai_fsm_a = require "./AIs/aggresive_fsm.coffee"
 
 stollen.add_ai ai_fsm()
@@ -43,7 +43,7 @@ MUSHROOM = 1
 ROCK     = 2
 
 ss = 16
-sc =  1
+sc =  2
 draw = ->
 
     stollen.update()
@@ -64,14 +64,14 @@ draw = ->
                     
             ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x*ss*sc, y*ss*sc, ss*sc, ss*sc]
 
-    dx = 32*16+8
+    dx = stollen.width*16*sc+8
     ctx.color = 0
-    ctx.fillRect [[dx, 0, 128, 32*16]]
+    ctx.fillRect [[dx, 0,(ss*sc+64)*2, 32*16]]
     for clan, i in stollen.clans
         for dwarf, j in clan
             if dwarf?
-                x = dx+i*54
-                y = 8 +j*24
+                x = dx+i*(ss*sc+48)
+                y = 8 +j*(ss*sc+4)
                 dwarf_stats dwarf, ctx, x, y
     ctx.present()
 
@@ -84,13 +84,15 @@ dwarf_stats = (dwarf, ctx, x, y)->
 
     sp = dwarf_sprites[dwarf.dwarf_id%dwarf_sprites.length]
     ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x, y, ss*sc, ss*sc]
-    x+=18
-    y+=4
+    x+=16*sc+2
     ctx.color = stat_color dwarf.health
     ctx.fillRect [[x,y+0, dwarf.health *0.01*32|0, 2]]
     ctx.color = stat_color dwarf.energy
     ctx.fillRect [[x,y+3, dwarf.energy *0.01*32|0, 2]]
     ctx.color = stat_color dwarf.satiety
     ctx.fillRect [[x,y+6, dwarf.satiety*0.01*32|0, 2]]
+    ctx.color = 0xFFFFFF
+    [0..dwarf.inv.length].map (i)-> ctx.fillRect [[x+i*3,y+9,2,2]]
+    
 
 setInterval draw, timeout
