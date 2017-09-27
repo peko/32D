@@ -38,10 +38,6 @@ stollen.add_ai ai_fsm()
 stollen.add_ai ai_fsm_a()
 # stollen.add_ai ai_fsm()
 
-tick = ->
-
-setInterval tick, 50
-
 EMPTY    = 0
 MUSHROOM = 1
 ROCK     = 2
@@ -54,7 +50,10 @@ draw = ->
     # stollen.log()
 
     ctx = win.render
+    gfx = ctx.gfx
+    
     size = ctx.outputSize
+    
     for r, y in stollen.map 
         for c, x in r
             sp = switch
@@ -65,6 +64,33 @@ draw = ->
                     
             ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x*ss*sc, y*ss*sc, ss*sc, ss*sc]
 
+    dx = 32*16+8
+    ctx.color = 0
+    ctx.fillRect [[dx, 0, 128, 32*16]]
+    for clan, i in stollen.clans
+        for dwarf, j in clan
+            if dwarf?
+                x = dx+i*54
+                y = 8 +j*24
+                dwarf_stats dwarf, ctx, x, y
     ctx.present()
+
+stat_color = (v)-> switch
+    when    v> 75 then 0x00A000
+    when 25<v<=75 then 0xA0A000
+    else               0xA00000
+
+dwarf_stats = (dwarf, ctx, x, y)->
+
+    sp = dwarf_sprites[dwarf.dwarf_id%dwarf_sprites.length]
+    ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x, y, ss*sc, ss*sc]
+    x+=18
+    y+=4
+    ctx.color = stat_color dwarf.health
+    ctx.fillRect [[x,y+0, dwarf.health *0.01*32|0, 2]]
+    ctx.color = stat_color dwarf.energy
+    ctx.fillRect [[x,y+3, dwarf.energy *0.01*32|0, 2]]
+    ctx.color = stat_color dwarf.satiety
+    ctx.fillRect [[x,y+6, dwarf.satiety*0.01*32|0, 2]]
 
 setInterval draw, timeout
