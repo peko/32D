@@ -1,5 +1,7 @@
 #!/bin/coffee
 
+timeout = 100
+
 sdl = require "node-sdl2"
 
 app = sdl.app
@@ -18,8 +20,6 @@ win.on 'close', ->
     app.quit()
 
 #win.on 'change', -> draw()
-
-
 
 Stollen = require "./stollen/Stollen"
 
@@ -47,7 +47,7 @@ MUSHROOM = 1
 ROCK     = 2
 
 ss = 16
-sc =  2
+sc =  1
 draw = ->
 
     stollen.update()
@@ -67,4 +67,4 @@ draw = ->
 
     ctx.present()
 
-setInterval draw, 10
+setInterval draw, timeout
