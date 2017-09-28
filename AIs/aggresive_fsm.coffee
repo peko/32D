@@ -39,41 +39,49 @@ fsm =
             when e.hungry    then fsm.EAT
             when e.injurned and
                  e.enemy_nearby then fsm.AVOID
-            when e.rested and
-                 e.healed       then fsm.HARVEST
+            when e.rested and e.healed
+                if e.low_supplies then fsm.HARVEST
+                else fsm.ATTACK
             when e.enemy_nearby then fsm.ATTACK
-            else                     fsm.REST
+
+            else fsm.REST
+
     EAT:
         data  : "EAT" 
         action: (d)-> "eat"
         update: (e)-> switch
             when e.injurned and
                  e.enemy_nearby then fsm.AVOID
-            when e.full         then fsm.HARVEST
-            when e.enemy_near   then fsm.ATTACK
-            else                     fsm.EAT
+            when e.full and
+                 e.low_supplies then fsm.HARVEST
+            when e.enemy_near then fsm.ATTACK
+
+            else fsm.EAT
 
            
     HARVEST:
         data  : "HRV"
         action: (d)-> harvest(d)
         update: (e)-> switch
-            when e.hungry       then fsm.EAT
-            when e.tired        then fsm.REST
+            when e.hungry then fsm.EAT
+            when e.tired then fsm.REST
             when e.injurned and
                  e.enemy_nearby then fsm.AVOID 
             when e.tired or
-                 e.wounded      then fsm.REST
-            else                     fsm.HARVEST
+                 e.wounded then fsm.REST
+            when e.full_supplies then fsm.REST
+
+            else fsm.HARVEST
                 
     AVOID:
         data  : "AVD"
         action: (d)-> avoid(d)
         update: (e)-> switch
-            when e.hungry    then fsm.EAT
-            when e.tired     then fsm.REST
+            when e.hungry then fsm.EAT
+            when e.tired then fsm.REST
             when e.enemy_far then fsm.REST
-            else                  fsm.AVOID
+
+            else fsm.AVOID
             
     ATTACK:
         data  : "FGT"
@@ -82,7 +90,8 @@ fsm =
             when e.hungry   then fsm.EAT
             when e.tired    then fsm.REST
             when e.injurned then fsm.AVOID
-            else                 fsm.ATTACK
+
+            else fsm.ATTACK
 
 
 extract_events = (d)->
