@@ -1,6 +1,6 @@
 #!/bin/coffee
 
-timeout = 10
+timeout = 100
 
 sdl = require "node-sdl2"
 
@@ -33,10 +33,10 @@ win.on 'close', ->
 Stollen = require "./stollen/Stollen"
 
 stollen = new Stollen 
-    width        :  40
-    height       :  40
-    max_mushrooms:  10
-    dwarfs_per_ai:  10
+    width        :  54
+    height       :  32
+    max_mushrooms:  32
+    dwarfs_per_ai:  24
     rocks_percent: 0.2
 
 # Каждый гном ходит рандомно
@@ -51,8 +51,9 @@ EMPTY    = 0
 MUSHROOM = 1
 ROCK     = 2
 
-ss = 16
-sc =  1
+ss = 16 # размер спрайта
+sc =  2 # зум
+
 draw = ->
 
     stollen.update()
@@ -83,7 +84,7 @@ draw = ->
                 
     dx = stollen.width*16*sc+8
     ctx.color = 0
-    ctx.fillRect [[dx, 0,(ss*sc+64)*2, 32*16]]
+    ctx.fillRect [[dx, 0,(ss*sc+64)*2, 32*32]]
     for clan, i in stollen.clans
         for dwarf, j in clan
             if dwarf?
