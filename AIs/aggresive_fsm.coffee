@@ -36,13 +36,13 @@ fsm =
         data  : "RST"
         action: (d)-> "rest"
         update: (e)-> switch
-            when e.hungry    then fsm.EAT
-            when e.injurned and
-                 e.enemy_nearby then fsm.AVOID
+            when e.enemy_nearby then switch
+                when e.injurned then fsm.AVOID
+                else fsm.ATTACK
+            when e.hungry then fsm.EAT
             when e.rested and e.healed
                 if e.low_supplies then fsm.HARVEST
                 else fsm.ATTACK
-            when e.enemy_nearby then fsm.ATTACK
 
             else fsm.REST
 
@@ -50,11 +50,11 @@ fsm =
         data  : "EAT" 
         action: (d)-> "eat"
         update: (e)-> switch
-            when e.injurned and
-                 e.enemy_nearby then fsm.AVOID
+            when e.enemy_nearby then switch
+                when e.injurned then fsm.AVOID
+                else fsm.ATTACK
             when e.full and
                  e.low_supplies then fsm.HARVEST
-            when e.enemy_near then fsm.ATTACK
 
             else fsm.EAT
 
@@ -66,7 +66,7 @@ fsm =
             when e.hungry then fsm.EAT
             when e.tired then fsm.REST
             when e.injurned and
-                 e.enemy_nearby then fsm.AVOID 
+                 e.enemy_nearby then fsm.AVOID
             when e.tired or
                  e.wounded then fsm.REST
             when e.full_supplies then fsm.REST
@@ -87,8 +87,8 @@ fsm =
         data  : "FGT"
         action: (d)-> attack(d)
         update: (e)-> switch
-            when e.hungry   then fsm.EAT
-            when e.tired    then fsm.REST
+            when e.hungry then fsm.EAT
+            when e.tired then fsm.REST
             when e.injurned then fsm.AVOID
 
             else fsm.ATTACK
@@ -201,10 +201,10 @@ avoid = (dwarf)->
     enemy = get_nearest_object dwarf.env, ["enemy", true]
 
     # Врагов нет -> отдыхаем
-    unless nearest?
+    unless enemy?
         return "rest"
 
-    [x,y] = nearest
+    [x,y] = enemy
     
     # Идем в противоположном направлении от врага    
     if Math.abs(x)>Math.abs(y)
@@ -218,15 +218,15 @@ avoid = (dwarf)->
     
 # Ищем врага, пинаем врага
 attack = (dwarf)->
-        
+    
     # получаем ближайшего врага
     enemy = get_nearest_object dwarf.env, ["enemy", true]
 
     # Врагов нет -> ищем врага пока не найдем
-    unless nearest?
+    unless enemy?
         return directions[dwarf.id%4]
 
-    [x,y] = nearest
+    [x,y] = enemy
     # Если в соседней клетке -> НА КИРКОЙ!
     return "fight" if (Math.abs(x)+Math.abs(y)) is 1
     
@@ -253,5 +253,6 @@ module.exports = ->
         state = dwarf_states[dwarf.id]
         state?= fsm.HARVEST
         action = state.action dwarf
-        dwarf_states[dwarf.id] = state.update extract_events dwarf
+        state = dwarf_states[dwarf.id] = state.update extract_events dwarf
+        # console.log "#{old_state} => #{new_state}"
         return action

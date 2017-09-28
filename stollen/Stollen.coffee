@@ -36,7 +36,6 @@ class Stollen
 
     mushroom_cnt :  0   # Счетчик грибочков
     max_mushrooms:100   # Максимум гробочков
-    max_damage   : 25   # Максимальный урон
     width        : 40   # Ширина штольни
     height       : 20   # высота штольни
     dwarfs_per_ai: 10   # Гномов в клане
@@ -69,7 +68,10 @@ class Stollen
             j = Math.random()*dwarfs.length|0
             [dwarfs[i], dwarfs[j]] = [dwarfs[j], dwarfs[i]]
 
-        # Тик гномов 
+        # Сбрасываем индикатор полученного урона
+        d.dmg = 0 for d in dwarfs when d?
+
+        # Тик гномов
         for d in dwarfs
             d?.update(@)
             
@@ -199,6 +201,9 @@ class Dwarf
     vision: 5
 
     rock_dig_probability: 0.2
+    min_damage: 10
+    max_damage: 25
+    dmg:0
 
     constructor:(@world, @clan_id, @dwarf_id, @ai, @x, @y)->
         @inv     = [cfg.MUSHROOM, cfg.MUSHROOM, cfg.MUSHROOM]
@@ -208,7 +213,6 @@ class Dwarf
         
     # Тик гнома
     update:->
-
         env = @world.get_elements_rect @x, @y, @vision
         for row, i in env
             for d, j in row
@@ -224,6 +228,7 @@ class Dwarf
             hl : @health
             en : @energy
             st : @satiety
+            dm : @dmg
             inv: @inv.slice(0)
             env: env
             
@@ -303,11 +308,12 @@ class Dwarf
     # Драться
     fight: (action)->
         dwarfs = @world.get_nearest_dwarfs @x, @y
-
+        dmg = @min_damage + Math.random()*(@max_damage-@min_damage)|0
         # Бьём одного ближайшего гнома из чужего клана
         for d in dwarfs
-            if d.clan_id is not @clan_id
-                d.health -= Math.random()*@max_damage|0
+            unless d.clan_id is @clan_id
+                d.health -= dmg
+                d.dmg = dmg
                 return
 
         # Врагов нет, бьём любого ближайшего гнома

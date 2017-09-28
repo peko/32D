@@ -1,6 +1,6 @@
 #!/bin/coffee
 
-timeout = 50
+timeout = 100
 
 sdl = require "node-sdl2"
 
@@ -33,17 +33,17 @@ win.on 'close', ->
 Stollen = require "./stollen/Stollen"
 
 stollen = new Stollen 
-    width        :  16
-    height       :  16
-    max_mushrooms:  20
-    dwarfs_per_ai:   3
-    rocks_percent: 0.5
+    width        :  20
+    height       :  20
+    max_mushrooms:  10
+    dwarfs_per_ai:  10
+    rocks_percent: 0.2
 
 # Каждый гном ходит рандомно
 ai_fsm   = require "./AIs/basic_fsm.coffee"
 ai_fsm_a = require "./AIs/aggresive_fsm.coffee"
 
-stollen.add_ai ai_fsm()
+stollen.add_ai ai_fsm_a()
 stollen.add_ai ai_fsm_a()
 # stollen.add_ai ai_fsm()
 
@@ -65,14 +65,22 @@ draw = ->
     
     for r, y in stollen.map 
         for c, x in r
+            dw = typeof c is 'object'
             sp = switch
-                when typeof c is'object' then dwarf_sprites[c.dwarf_id%dwarf_sprites.length]
-                when c is MUSHROOM       then [1, 2]
-                when c is ROCK           then [0, 2]
+                when dw            then get_sprite c 
+                when c is MUSHROOM then [1, 2]
+                when c is ROCK     then [0, 2]
                 else  [2, 2]
-                    
-            ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x*ss*sc, y*ss*sc, ss*sc, ss*sc]
-
+            
+            ctx.copy sprites.texture(ctx),
+                [sp[0]*ss,sp[1]*ss, ss,    ss   ],
+                [x*ss*sc , y*ss*sc, ss*sc, ss*sc],
+                null, null, c?.action in ["w", "n"]
+                
+            if dw and c.dmg>0
+                ctx.color = 0xF02040
+                ctx.fillRect [[x*ss*sc, y*ss*sc], [8, 8]]
+                
     dx = stollen.width*16*sc+8
     ctx.color = 0
     ctx.fillRect [[dx, 0,(ss*sc+64)*2, 32*16]]
@@ -84,6 +92,9 @@ draw = ->
                 dwarf_stats dwarf, ctx, x, y
     ctx.present()
 
+get_sprite = (c)->
+    dwarf_sprites[c.clan_id%dwarf_sprites.length]
+    
 stat_color = (v)-> switch
     when    v> 75 then 0x00A000
     when 25<v<=75 then 0xA0A000
@@ -104,11 +115,11 @@ dwarf_stats = (dwarf, ctx, x, y)->
     [0..dwarf.inv.length].map (i)-> ctx.fillRect [[sx+i*3,y+9,2,2]]
 
     color = switch dwarf.action
-        when "rest"   then 0x808080
-        when "fight"  then 0x800000
-        when "eat"    then 0x808000
-        when "grab"   then 0x408040
-        when "dig"    then 0x404080
+        when "rest"  then 0x808080
+        when "fight" then 0x800000
+        when "eat"   then 0x808000
+        when "grab"  then 0x408040
+        when "dig"   then 0x404080
         else 0xB0B0B0
     {w, h} = fnt.getSize dwarf.action
     txt = fnt.blend dwarf.action, [color, 0xFF]
