@@ -1,6 +1,6 @@
 #!/bin/coffee
 
-timeout = 100
+timeout = 10
 
 sdl = require "node-sdl2"
 
@@ -33,8 +33,8 @@ win.on 'close', ->
 Stollen = require "./stollen/Stollen"
 
 stollen = new Stollen 
-    width        :  20
-    height       :  20
+    width        :  40
+    height       :  40
     max_mushrooms:  10
     dwarfs_per_ai:  10
     rocks_percent: 0.2
@@ -52,7 +52,7 @@ MUSHROOM = 1
 ROCK     = 2
 
 ss = 16
-sc =  2
+sc =  1
 draw = ->
 
     stollen.update()
