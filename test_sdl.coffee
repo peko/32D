@@ -10,8 +10,14 @@ Win = sdl.window
 Img = sdl.image
 sprites = new Img "img/sprites.png"
 dwarf_sprites = []
-[0..1].map (i)-> [0..7].map (j)->dwarf_sprites.push [j,i]
+# [0..1].map (i)-> [0..7].map (j)->dwarf_sprites.push [j,i]
+dwarf_sprites.push [4,0]
+dwarf_sprites.push [3,1]
 
+Fnt = sdl.font
+fnt = new Fnt "img/terminus.ttf", 12
+fnt.height = 12
+fnt.ougline = 1
 
 win = new Win
     background: 0
@@ -20,6 +26,9 @@ win.on 'close', ->
     app.quit()
 
 #win.on 'change', -> draw()
+
+
+
 
 Stollen = require "./stollen/Stollen"
 
@@ -82,17 +91,27 @@ stat_color = (v)-> switch
 
 dwarf_stats = (dwarf, ctx, x, y)->
 
-    sp = dwarf_sprites[dwarf.dwarf_id%dwarf_sprites.length]
+    sp = dwarf_sprites[dwarf.clan_id%dwarf_sprites.length]
     ctx.copy sprites.texture(ctx), [sp[0]*ss,sp[1]*ss,ss,ss], [x, y, ss*sc, ss*sc]
-    x+=16*sc+2
+    sx = x + 16*sc+2
     ctx.color = stat_color dwarf.health
-    ctx.fillRect [[x,y+0, dwarf.health *0.01*32|0, 2]]
+    ctx.fillRect [[sx,y+0, dwarf.health *0.01*32|0, 2]]
     ctx.color = stat_color dwarf.energy
-    ctx.fillRect [[x,y+3, dwarf.energy *0.01*32|0, 2]]
+    ctx.fillRect [[sx,y+3, dwarf.energy *0.01*32|0, 2]]
     ctx.color = stat_color dwarf.satiety
-    ctx.fillRect [[x,y+6, dwarf.satiety*0.01*32|0, 2]]
+    ctx.fillRect [[sx,y+6, dwarf.satiety*0.01*32|0, 2]]
     ctx.color = 0xFFFFFF
-    [0..dwarf.inv.length].map (i)-> ctx.fillRect [[x+i*3,y+9,2,2]]
-    
+    [0..dwarf.inv.length].map (i)-> ctx.fillRect [[sx+i*3,y+9,2,2]]
+
+    color = switch dwarf.action
+        when "rest"   then 0x808080
+        when "fight"  then 0x800000
+        when "eat"    then 0x808000
+        when "grab"   then 0x408040
+        when "dig"    then 0x404080
+        else 0xB0B0B0
+    {w, h} = fnt.getSize dwarf.action
+    txt = fnt.blend dwarf.action, [color, 0xFF]
+    ctx.cut txt.texture(ctx), [0,0,w,h], [sx,y+18,w,h]
 
 setInterval draw, timeout
