@@ -2,9 +2,14 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(Stollen)
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-long-long -pedantic")
 include(./utils.cmake)
 add_subdirectory(dep/raylib/src)
-include_directories(dep/raylib/src)
-add_executable(Stollen src/main.c src/stollen.c src/dwarf.c)
+include_directories(dep/raylib/src dep/klib/)
+add_executable(Stollen
+    src/main.c 
+    src/resources.c 
+    src/stollen.c 
+    src/dwarf.c 
+    src/ai.c)
 link_with_raylib(Stollen)

@@ -1,5 +1,6 @@
 #include "raylib.h"
 
+#include "resources.h"
 #include "stollen.h"
 
 int main() {
@@ -7,18 +8,22 @@ int main() {
     int screenWidth = 800;
     int screenHeight = 450;
 
-    Stollen stollen = StollenNew(200, 200);
     
     InitWindow(screenWidth, screenHeight, "Stollen");
-
-    Texture2D sprites = LoadTexture("../img/sprites.png");
+    ResourcesInit();
     
+    Stollen stollen = StollenNew(20, 20);
+    StollenAddAI(stollen, 1);
+
     SetTargetFPS(60);
     while (!WindowShouldClose()) {
+
+        StollenUpdate(stollen);
+        
         BeginDrawing();
         {
             ClearBackground(BLACK);
-            DrawTextureRec(sprites,(Rectangle){32,16,16,16}, (Vector2){128,64}, WHITE);
+            StollenDraw(stollen);
             DrawText("Stollen", 10, 10, 20, LIGHTGRAY);
             DrawFPS(screenWidth - 90, screenHeight - 30);  
         }
