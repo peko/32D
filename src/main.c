@@ -26,7 +26,7 @@ int main() {
     }
 
     CloseWindow();
-
+    StollenFree(stollen);
     return 0;
 }
 
