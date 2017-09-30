@@ -16,3 +16,5 @@ typedef enum {
 Dwarf DwarfNew();
 void DwarfFree(Dwarf);
 void DwarfUpdate(Dwarf);
+
+float DwarfSatiety(Dwarf);

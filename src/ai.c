@@ -16,12 +16,12 @@ State StateUpdate(State state, Dwarf dwarf) {
 }
 
 State rest(Dwarf dwarf) {
-    State s = {EAT, eat};
-    return s;
+    if(DwarfSatiety(dwarf) < 20) return (State){EAT, eat};
+    return (State){REST, rest};
 }
 
 State eat(Dwarf dwarf) {
-    State s = {REST, rest};
-    return s;
+    if(DwarfSatiety(dwarf) >= 100) return (State){REST, rest};
+    return (State){EAT, eat};
 }
 
