@@ -24,3 +24,4 @@ State eat(Dwarf dwarf) {
     State s = {REST, rest};
     return s;
 }
+

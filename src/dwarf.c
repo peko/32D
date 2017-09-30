@@ -4,12 +4,11 @@
 #include "ai.h"
 
 struct Dwarf {
-    float x,y;
+    float x, y;
     float dir;
     float health;
     float energy;
     float satiety;
-
     State state;
 };
 
@@ -26,3 +25,5 @@ void DwarfFree(Dwarf this) {
 void DwarfUpdate(Dwarf this) {
     this->state = StateUpdate(this->state, this); 
 }
+
+

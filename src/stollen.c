@@ -87,14 +87,7 @@ void StollenUpdate(Stollen this) {
 void StollenDraw(Stollen this) {
     for(int y=0; y<this->height; y++) {
         for(int x=0; x<this->width; x++) {
-            switch(this->map[y*this->width + x]) {
-                case 0 : 
-                    draw(GROUND, x, y);
-                    break;
-                case 1 : 
-                    draw(ROCK  , x, y);
-                    break;
-            }
+            draw(this->map[y*this->width+x], x, y);
         }
     }
 }

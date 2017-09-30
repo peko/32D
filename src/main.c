@@ -5,14 +5,14 @@
 
 int main() {
 
-    int screenWidth = 800;
-    int screenHeight = 450;
+    int screenWidth  = 32*16;
+    int screenHeight = 32*16;
 
     
     InitWindow(screenWidth, screenHeight, "Stollen");
     ResourcesInit();
     
-    Stollen stollen = StollenNew(20, 20);
+    Stollen stollen = StollenNew(32, 32);
     StollenAddAI(stollen, 1);
 
     SetTargetFPS(60);
@@ -24,8 +24,8 @@ int main() {
         {
             ClearBackground(BLACK);
             StollenDraw(stollen);
-            DrawText("Stollen", 10, 10, 20, LIGHTGRAY);
-            DrawFPS(screenWidth - 90, screenHeight - 30);  
+            DrawText("Stollen", 8, 8, 20, LIGHTGRAY);
+            DrawFPS(screenWidth - 88, screenHeight - 28);  
         }
         EndDrawing();
     }
