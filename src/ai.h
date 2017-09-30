@@ -3,11 +3,11 @@
 #include "dwarf.h"
 
 // http://c-faq.com/decl/recurfuncp.html
-typedef struct state State;
-struct state {
+typedef struct dwarfState DwarfState;
+struct dwarfState {
     DwarfAction action;
-    State (*update)(Dwarf);
+    DwarfState (*update)(DwarfEvents);
 };
 
-State StateStart();
-State StateUpdate(State, Dwarf);
+DwarfState StateStart();
+DwarfState StateUpdate(DwarfState, DwarfEvents);

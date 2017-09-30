@@ -2,26 +2,46 @@
 
 #include "ai.h"
 
-State rest(Dwarf);
-State eat (Dwarf);
+// State alive(DwarfEvents);
+// State dead (DwarfEvents);
 
-State StateStart() {
-    State s = {REST, rest};
+static DwarfState rest   (DwarfEvents);
+static DwarfState eat    (DwarfEvents);
+static DwarfState harvest(DwarfEvents);
+static DwarfState fight  (DwarfEvents);
+static DwarfState avoid  (DwarfEvents);
+
+DwarfState StateStart() {
+    DwarfState s = (DwarfState){REST, rest};
     return s;
 }
 
-State StateUpdate(State state, Dwarf dwarf) {
-    State s = (*state.update)(dwarf);
+DwarfState StateUpdate(DwarfState state, DwarfEvents events) {
+    DwarfState s = (*state.update)(events);
     return s;
 }
 
-State rest(Dwarf dwarf) {
-    if(DwarfSatiety(dwarf) < 20) return (State){EAT, eat};
-    return (State){REST, rest};
+
+// States
+
+DwarfState rest(DwarfEvents e) {
+    if(e & HUNGRY) return (DwarfState){EAT, eat};
+    return (DwarfState){REST, rest};
 }
 
-State eat(Dwarf dwarf) {
-    if(DwarfSatiety(dwarf) >= 100) return (State){REST, rest};
-    return (State){EAT, eat};
+DwarfState eat(DwarfEvents e) {
+    if(e & FULL) return (DwarfState){REST, rest};
+    return (DwarfState){EAT, eat};
 }
 
+DwarfState harvest(DwarfEvents e) {
+    return (DwarfState){HARVEST, harvest};
+}
+
+DwarfState avoid(DwarfEvents e) {
+    return (DwarfState){FIGHT, avoid};
+}
+
+DwarfState fight(DwarfEvents e) {
+    return (DwarfState){FIGHT, fight};
+}
