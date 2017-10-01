@@ -101,6 +101,14 @@ void StollenDraw(Stollen this) {
 
 // Static
 
+static Pos getNearObject(Stollen this, Pos p, Sprite type) {
+    if(this->map[(p.x+0)+(p.y-1)*this->width] == type) return (Pos){p.x+0, p.y-1}; // N
+    if(this->map[(p.x+1)+(p.y+0)*this->width] == type) return (Pos){p.x+1, p.y+0}; // E
+    if(this->map[(p.x+0)+(p.y+1)*this->width] == type) return (Pos){p.x+0, p.y+1}; // S
+    if(this->map[(p.x-1)+(p.y+0)*this->width] == type) return (Pos){p.x-1, p.y+0}; // W
+    return (Pos){-1,-1};
+}
+
 // Cell offset            N      E     S      W
 static Pos offsets[] = {{0,-1},{1,0},{0,1},{-1,0}};
 static void move(Stollen this, Dwarf dwarf, int dir) {
@@ -120,10 +128,24 @@ static void move(Stollen this, Dwarf dwarf, int dir) {
        *dm = EMPTY;
    }
 }
-static void eat(Stollen this, Dwarf dwarf) {}
+
+static void eat(Stollen this, Dwarf dwarf) {
+   Pos d = DwarfGetPos(dwarf);
+   Pos n = getNearObject(this, d, MUSHROOM);
+   if(n.x>=0) {
+       this->map[n.x+n.y*this->width] = EMPTY;
+   }
+}
+
 static void harvest(Stollen this, Dwarf dwarf) {}
 static void fight(Stollen this, Dwarf dwarf) {}
-static void dig(Stollen this, Dwarf dwarf) {}
+static void dig(Stollen this, Dwarf dwarf) {
+   Pos d = DwarfGetPos(dwarf);
+   Pos n = getNearObject(this, d, ROCK);
+   if(n.x>=0) {
+       this->map[n.x+n.y*this->width] = EMPTY;
+   }
+}
 
 static void action(Stollen this, Dwarf dwarf, DwarfAction action){
     switch(action) {
@@ -166,6 +188,7 @@ static void draw(Sprite sprite, Pos pos) {
     }
     DrawTextureRec(sprites, src, (Vector2){pos.x*16, pos.y*16}, WHITE);
 }
+
 static Pos getEmptyCell(Stollen this) {
     // try random some times
     for(int i=0; i<100; i++) {
