@@ -13,7 +13,7 @@ int main() {
     ResourcesInit();
     
     Stollen stollen = StollenNew(32, 32);
-    StollenAddAI(stollen, 1);
+    StollenAddAI(stollen, 15);
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) {

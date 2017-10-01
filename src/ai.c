@@ -18,6 +18,7 @@ DwarfState StateStart() {
 
 DwarfState StateUpdate(DwarfState state, DwarfEvents events) {
     DwarfState s = (*state.update)(events);
+    s.action = rand() % DIG;
     return s;
 }
 

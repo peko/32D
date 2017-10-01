@@ -4,8 +4,7 @@
 #include "ai.h"
 
 struct Dwarf {
-    int x, y;
-    int dir;
+    Pos pos;
     int health;
     int energy;
     int satiety;
@@ -28,8 +27,9 @@ static unsigned int enemyDistance(Dwarf his);
 static unsigned int getEvents(Dwarf this);
 
 
-Dwarf DwarfNew() {
+Dwarf DwarfNew(Pos pos) {
     Dwarf this = calloc(1, sizeof(struct Dwarf));
+    this->pos = pos;
     this->state = StateStart();
     return this;
 }
@@ -38,7 +38,7 @@ void DwarfFree(Dwarf this) {
     free(this);
 }
 
-void DwarfUpdate(Dwarf this) {
+DwarfAction DwarfUpdate(Dwarf this) {
     
     // State machine update
     this->state = StateUpdate(this->state, getEvents(this));
@@ -46,6 +46,7 @@ void DwarfUpdate(Dwarf this) {
     this->health  += actionCosts[this->state.action][0];
     this->energy  += actionCosts[this->state.action][1];
     this->satiety += actionCosts[this->state.action][2];
+
 
     if(this->satiety < 0) this->health += this->satiety/10;
     
@@ -56,12 +57,21 @@ void DwarfUpdate(Dwarf this) {
     
     if(this->health < 0) this->health = 0;
     if(this->energy < 0) this->energy = 0;
+
+    return this->state.action;
 }
 
 float DwarfSatiety(Dwarf this) {
     return this->satiety;
 }
 
+Pos DwarfGetPos(Dwarf this) {
+    return this->pos;
+}
+
+void DwarfSetPos(Dwarf this, Pos pos) {
+    this->pos = pos;
+}
 
 // Static functions
 

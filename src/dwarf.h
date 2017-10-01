@@ -2,6 +2,8 @@
 
 #include "kvec.h"
 
+typedef struct {int x, y;} Pos;
+
 typedef struct Dwarf* Dwarf;
 typedef kvec_t(Dwarf) Dwarfs_v;
 
@@ -29,8 +31,9 @@ enum DwarfEvent {
     RESTED       = 1 << 12,
 };
 typedef unsigned int DwarfEvents;
-    
-Dwarf DwarfNew();
-void DwarfFree(Dwarf);
-void DwarfUpdate(Dwarf);
 
+Dwarf DwarfNew(Pos pos);
+void DwarfFree(Dwarf);
+DwarfAction DwarfUpdate(Dwarf);
+Pos DwarfGetPos(Dwarf);
+void DwarfSetPos(Dwarf, Pos);
