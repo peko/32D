@@ -6,6 +6,8 @@
 #include "stollen.h"
 #include "dwarf.h"
 
+#define MAX_MUSHROOMS 20
+
 struct clan {
     Dwarfs_v dwarfs;
 };
@@ -22,10 +24,12 @@ typedef enum {
 struct stollen {
     int width;
     int height;
+    int mushroomCnt;
     Clans_v clans;
     Sprite* map;
 };
 
+static void growMushrooms(Stollen);
 static void action(Stollen, Dwarf, DwarfAction);
 static void draw(Sprite, Pos);
 
@@ -47,10 +51,12 @@ Stollen StollenNew(int width, int height) {
     kv_init(this->clans);
     this->width  = width;
     this->height = height;
+    this->mushroomCnt = 0;
     this->map = calloc(width*height, sizeof(int));
     for(int i=0; i<width*height; i++) {
         this->map[i] = rand()%100>90 ? ROCK : EMPTY;
     }
+    growMushrooms(this);
     return this;
 }
 
@@ -160,4 +166,26 @@ static void draw(Sprite sprite, Pos pos) {
     }
     DrawTextureRec(sprites, src, (Vector2){pos.x*16, pos.y*16}, WHITE);
 }
+static Pos getEmptyCell(Stollen this) {
+    // try random some times
+    for(int i=0; i<100; i++) {
+        Pos p = {rand() % this->width, rand() % this->height};
+        if (this->map[p.y*this->width+p.x] == EMPTY) return p;
+    }
+    // Full iteration line by line 
+    for(int y=0; y<this->height; y++) {
+        for(int x=0; x<this->width; x++) {
+            if(this->map[y*this->width+x] == EMPTY) return (Pos){x,y}; 
+        }
+    }
+    // can not find empty cell
+    return (Pos){-1,-1};
+}
 
+static void growMushrooms(Stollen this) {
+    while(this->mushroomCnt < MAX_MUSHROOMS) {
+        Pos p = getEmptyCell(this);
+        this->map[p.y*this->width+p.x] = MUSHROOM;
+        this->mushroomCnt++;
+    }
+}
