@@ -12,41 +12,55 @@ struct Dwarf {
 };
 
 static int actionCosts[][3] = {
+    { 0, 0,-1}, // NONE
     {10,10,-1}, // REST
-    {-1,-1,20}, // EAT
+    { 0, 0,-1}, // EAT
     {-1,-1,-1}, // N
     {-1,-1,-1}, // E
     {-1,-1,-1}, // S
     {-1,-1,-1}, // W
-    {-2,-2,-1}, // FIGHT
-    {-2,-2,-1}, // DIG
+    {-5,-5,-5}, // FIGHT
+    {-5,-5,-5}, // DIG
+};
+
+static char* actionNames[] = {
+    "None",
+    "Resting",
+    "Eating",
+    "N","E","S","W",
+    "Fighting",
+    "Digging",
 };
 
 // forward declaration for static helpers
 static unsigned int enemyDistance(Dwarf his);
 static unsigned int getEvents(Dwarf this);
 
-
 Dwarf DwarfNew(Pos pos) {
-    Dwarf this = calloc(1, sizeof(struct Dwarf));
-    this->pos = pos;
-    this->state = StateStart();
+    Dwarf this  = calloc(1, sizeof(struct Dwarf));
+    this->state = StateNew();
+    this->pos   = pos;
+    this->health  = 100;
+    this->energy  = 100;
+    this->satiety = 100;
     return this;
 }
 
 void DwarfFree(Dwarf this) {
+    StateFree(this->state);
     free(this);
 }
 
 DwarfAction DwarfUpdate(Dwarf this) {
     
     // State machine update
-    this->state = StateUpdate(this->state, getEvents(this));
+    StateUpdate(this->state, getEvents(this));
 
-    this->health  += actionCosts[this->state.action][0];
-    this->energy  += actionCosts[this->state.action][1];
-    this->satiety += actionCosts[this->state.action][2];
-
+    DwarfAction action = StateAction(this->state);
+    
+    this->health  += actionCosts[action][0];
+    this->energy  += actionCosts[action][1];
+    this->satiety += actionCosts[action][2];
 
     if(this->satiety < 0) this->health += this->satiety/10;
     
@@ -55,10 +69,15 @@ DwarfAction DwarfUpdate(Dwarf this) {
     if(this->energy  > 100) this->energy  = 100;
     if(this->satiety > 100) this->satiety = 100;
     
-    if(this->health < 0) this->health = 0;
-    if(this->energy < 0) this->energy = 0;
-
-    return this->state.action;
+    if(this->health  <   0) this->health  =   0;
+    if(this->energy  <   0) this->energy  =   0;
+    if(this->satiety < -20) this->satiety = -20;
+    
+    printf("%4d %4d %4d : %3d %3d %3d : (%d) %s\n", 
+        this->health, this->energy, this->satiety,
+        actionCosts[action][0], actionCosts[action][1], actionCosts[action][2],
+        action, actionNames[action]);
+    return StateAction(this->state);
 }
 
 float DwarfSatiety(Dwarf this) {
@@ -71,6 +90,10 @@ Pos DwarfGetPos(Dwarf this) {
 
 void DwarfSetPos(Dwarf this, Pos pos) {
     this->pos = pos;
+}
+
+void DwarfEat(Dwarf this, int sat) {
+    this->satiety += sat;
 }
 
 // Static functions

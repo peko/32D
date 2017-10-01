@@ -19,19 +19,20 @@ typedef enum {
     ROCK,
     MUSHROOM,
     DWARF
-} Sprite;
+} Object;
 
 struct stollen {
     int width;
     int height;
     int mushroomCnt;
     Clans_v clans;
-    Sprite* map;
+    Object* map;
 };
 
+static void draw         (Object, Pos);
+static void action       (Stollen, Dwarf, DwarfAction);
 static void growMushrooms(Stollen);
-static void action(Stollen, Dwarf, DwarfAction);
-static void draw(Sprite, Pos);
+static Pos  getEmptyCell (Stollen);
 
 Clan ClanNew() {
     Clan clan = calloc(1, sizeof(struct clan));
@@ -74,10 +75,12 @@ void StollenAddAI(Stollen this, int dwarfs_cnt) {
     Clan clan = ClanNew();
     kv_push(Clan, this->clans, clan);
     for(int i=0; i<dwarfs_cnt; i++) {
-        Pos pos = {rand()%this->width, rand()%this->height};
-        Dwarf dwarf = DwarfNew(pos);
-        this->map[pos.y * this->width + pos.x] = DWARF; 
-        kv_push(Dwarf, clan->dwarfs, dwarf);
+        Pos p = getEmptyCell(this);
+        if(p.x >= 0) {
+            Dwarf dwarf = DwarfNew(p);
+            this->map[p.y*this->width+p.x] = DWARF; 
+            kv_push(Dwarf, clan->dwarfs, dwarf);
+        }
     }
 }
 
@@ -101,11 +104,11 @@ void StollenDraw(Stollen this) {
 
 // Static
 
-static Pos getNearObject(Stollen this, Pos p, Sprite type) {
-    if(this->map[(p.x+0)+(p.y-1)*this->width] == type) return (Pos){p.x+0, p.y-1}; // N
-    if(this->map[(p.x+1)+(p.y+0)*this->width] == type) return (Pos){p.x+1, p.y+0}; // E
-    if(this->map[(p.x+0)+(p.y+1)*this->width] == type) return (Pos){p.x+0, p.y+1}; // S
-    if(this->map[(p.x-1)+(p.y+0)*this->width] == type) return (Pos){p.x-1, p.y+0}; // W
+static Pos getNearObject(Stollen this, Pos p, Object type) {
+    if(this->map[(p.x+0)+(p.y-1)*this->width] == type) return (Pos){p.x+0,p.y-1}; // N
+    if(this->map[(p.x+1)+(p.y+0)*this->width] == type) return (Pos){p.x+1,p.y+0}; // E
+    if(this->map[(p.x+0)+(p.y+1)*this->width] == type) return (Pos){p.x+0,p.y+1}; // S
+    if(this->map[(p.x-1)+(p.y+0)*this->width] == type) return (Pos){p.x-1,p.y+0}; // W
     return (Pos){-1,-1};
 }
 
@@ -120,8 +123,8 @@ static void move(Stollen this, Dwarf dwarf, int dir) {
    if (t.y<0) t.y += this->height;
    if (t.x>this->width ) t.x %= this->width;
    if (t.y>this->height) t.y %= this->height;
-   Sprite* dm = &this->map[d.y * this->width + d.x];
-   Sprite* tm = &this->map[t.y * this->width + t.x];
+   Object* dm = &this->map[d.y * this->width + d.x];
+   Object* tm = &this->map[t.y * this->width + t.x];
    if(*tm == EMPTY) {
        DwarfSetPos(dwarf, t);
        *tm = DWARF;
@@ -134,6 +137,7 @@ static void eat(Stollen this, Dwarf dwarf) {
    Pos n = getNearObject(this, d, MUSHROOM);
    if(n.x>=0) {
        this->map[n.x+n.y*this->width] = EMPTY;
+       DwarfEat(dwarf, 20);
    }
 }
 
@@ -170,7 +174,7 @@ static void action(Stollen this, Dwarf dwarf, DwarfAction action){
     }
 }
 
-static void draw(Sprite sprite, Pos pos) {
+static void draw(Object sprite, Pos pos) {
     Rectangle src;
     switch(sprite) {
         case EMPTY:

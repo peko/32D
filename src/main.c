@@ -8,12 +8,11 @@ int main() {
     int screenWidth  = 32*16;
     int screenHeight = 32*16;
 
-    
     InitWindow(screenWidth, screenHeight, "Stollen");
     ResourcesInit();
     
     Stollen stollen = StollenNew(32, 32);
-    StollenAddAI(stollen, 15);
+    StollenAddAI(stollen, 1);
 
     SetTargetFPS(60);
     while (!WindowShouldClose()) {

@@ -8,6 +8,7 @@ typedef struct Dwarf* Dwarf;
 typedef kvec_t(Dwarf) Dwarfs_v;
 
 typedef enum {
+    NONE,
     REST,
     EAT,
     N, E, S, W,
@@ -37,3 +38,4 @@ void DwarfFree(Dwarf);
 DwarfAction DwarfUpdate(Dwarf);
 Pos DwarfGetPos(Dwarf);
 void DwarfSetPos(Dwarf, Pos);
+void DwarfEat(Dwarf, int);

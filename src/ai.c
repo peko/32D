@@ -2,47 +2,58 @@
 
 #include "ai.h"
 
-// State alive(DwarfEvents);
-// State dead (DwarfEvents);
+// completting type
+struct dwarfState {
+    DwarfAction action;
+    void (*update)(DwarfState, DwarfEvents);
+};
 
-static DwarfState rest   (DwarfEvents);
-static DwarfState eat    (DwarfEvents);
-static DwarfState harvest(DwarfEvents);
-static DwarfState fight  (DwarfEvents);
-static DwarfState avoid  (DwarfEvents);
+// Forward declaration of states
+static void eat    (DwarfState, DwarfEvents);
+static void dead   (DwarfState, DwarfEvents);
+static void rest   (DwarfState, DwarfEvents);
+static void fight  (DwarfState, DwarfEvents);
+static void avoid  (DwarfState, DwarfEvents);
+static void harvest(DwarfState, DwarfEvents);
 
-DwarfState StateStart() {
-    DwarfState s = (DwarfState){REST, rest};
-    return s;
+#define GOTO(action, state) (*this=(struct dwarfState){(action),(state)})
+
+DwarfState StateNew() {
+    DwarfState this = calloc(1, sizeof(struct dwarfState));
+    GOTO(NONE, rest);
+    return this;
 }
 
-DwarfState StateUpdate(DwarfState state, DwarfEvents events) {
-    DwarfState s = (*state.update)(events);
-    s.action = rand() % DIG;
-    return s;
+void StateFree(DwarfState this){
+    free(this);
 }
 
-
-// States
-
-DwarfState rest(DwarfEvents e) {
-    if(e & HUNGRY) return (DwarfState){EAT, eat};
-    return (DwarfState){REST, rest};
+void StateUpdate(DwarfState this, DwarfEvents events) {
+    (*this->update)(this, events);
 }
 
-DwarfState eat(DwarfEvents e) {
-    if(e & FULL) return (DwarfState){REST, rest};
-    return (DwarfState){EAT, eat};
+DwarfAction StateAction(DwarfState this) {
+    return this->action;
+} 
+
+// Static
+
+static void dead(DwarfState this, DwarfEvents e) {
 }
 
-DwarfState harvest(DwarfEvents e) {
-    return (DwarfState){HARVEST, harvest};
+static void rest(DwarfState this, DwarfEvents e) {
+    if(e & HUNGRY) GOTO(EAT, eat);
 }
 
-DwarfState avoid(DwarfEvents e) {
-    return (DwarfState){FIGHT, avoid};
+static void eat(DwarfState this, DwarfEvents e) {
+    if(e & FULL) GOTO(REST, rest);
 }
 
-DwarfState fight(DwarfEvents e) {
-    return (DwarfState){FIGHT, fight};
+static void harvest(DwarfState this, DwarfEvents e) {
+}
+
+static void avoid(DwarfState this, DwarfEvents e) {
+}
+
+static void fight(DwarfState this, DwarfEvents e) {
 }
