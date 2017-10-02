@@ -4,7 +4,7 @@
 
 // http://c-faq.com/decl/recurfuncp.html
 typedef struct dwarfState {
-    DwarfAction (*update)(Ai, DwarfEvents);
+    Action (*update)(Ai, DwarfEvents);
 } DwarfState;
 
 struct ai {
@@ -12,13 +12,13 @@ struct ai {
 };
 
 // Forward declaration of states
-static DwarfAction alive  (Ai, DwarfEvents);
-static DwarfAction dead   (Ai, DwarfEvents);
-static DwarfAction eat    (Ai, DwarfEvents);
-static DwarfAction rest   (Ai, DwarfEvents);
-static DwarfAction fight  (Ai, DwarfEvents);
-static DwarfAction avoid  (Ai, DwarfEvents);
-static DwarfAction harvest(Ai, DwarfEvents);
+static Action alive  (Ai, DwarfEvents);
+static Action dead   (Ai, DwarfEvents);
+static Action eat    (Ai, DwarfEvents);
+static Action rest   (Ai, DwarfEvents);
+static Action fight  (Ai, DwarfEvents);
+static Action avoid  (Ai, DwarfEvents);
+static Action harvest(Ai, DwarfEvents);
 
 static inline void AiPush(Ai, DwarfState);
 static inline void AiPop(Ai);
@@ -51,18 +51,18 @@ static inline DwarfState* AiCurrentState(Ai this) {
     return &this->states.a[this->states.n-1];
 }
 
-DwarfAction AiUpdate(Ai this, DwarfEvents e) {
+Action AiUpdate(Ai this, DwarfEvents e) {
     if (this->states.n>0) {
         DwarfState* state = AiCurrentState(this);
-        DwarfAction action = (*state->update)(this, e);
+        Action action = (*state->update)(this, e);
         return action;
     }
     return NONE;
 }
 
+// States
 
-// Static
-static DwarfAction alive(Ai this, DwarfEvents e) {
+static Action alive(Ai this, DwarfEvents e) {
     printf("ALIVE\n");
     if(e & DEAD) {
         // clear stack
@@ -77,38 +77,52 @@ static DwarfAction alive(Ai this, DwarfEvents e) {
     return NONE;
 }
 
-static DwarfAction dead(Ai this, DwarfEvents e) {
+static Action dead(Ai this, DwarfEvents e) {
     printf("DEAD\n");
     return NONE;
 }
 
-static DwarfAction rest(Ai this, DwarfEvents e) {
+static Action rest(Ai this, DwarfEvents e) {
     printf("REST\n");
     if ((e & RESTED) && (e & HEALTHY)) POP_STATE;
     return REST;
 }
 
-static DwarfAction eat(Ai this, DwarfEvents e) {
+static Action eat(Ai this, DwarfEvents e) {
     printf("EAT\n");
     if(e & FULL) POP_STATE;
     if(e & NO_FOOD) PUSH_STATE(harvest);
     return EAT;
 }
 
-static DwarfAction harvest(Ai this, DwarfEvents e) {
+static Action harvest(Ai this, DwarfEvents e) {
     printf("HARVEST\n");
     if(e & ENOUGH_FOOD) POP_STATE;
-    return rand()%2 ? N : rand()%2 ? W : EAT;
+    return rand()%2?GET:rand()%3?N:rand()%3?E:rand()%2?S:W;
 }
 
-static DwarfAction avoid(Ai this, DwarfEvents e) {
+static Action avoid(Ai this, DwarfEvents e) {
     printf("AVOID\n");
     if(NO_ENEMIES) POP_STATE;
-    return rand()%2? N : W;
+    return rand()%2?N:rand()%2?E:rand()%2?S:W;
 }
 
-static DwarfAction fight(Ai this, DwarfEvents e) {
+static Action fight(Ai this, DwarfEvents e) {
     printf("FIGHT\n");
     if(NO_ENEMIES) POP_STATE;
     return FIGHT;
 }
+
+/*
+typedef struct {
+   void* (*new)(),
+   void  (*free)(void*),
+   Action (*update)(void*, DwarfEvents);
+} Ai;
+
+Ai SfsmAi = {
+    .new    = AiNew,
+    .free   = AiFree,
+    .update = AiUpdate,
+}
+*/

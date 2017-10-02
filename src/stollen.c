@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include "raylib.h"
 #include "resources.h"
 #include "stollen.h"
 #include "dwarf.h"
@@ -13,23 +12,15 @@ struct clan {
 typedef struct clan* Clan;
 typedef kvec_t(Clan) Clans_v;
 
-typedef enum {
-    EMPTY,
-    ROCK,
-    MUSHROOM,
-    DWARF
-} Object;
-
 struct stollen {
     int width;
     int height;
-    int mushroomCnt;
+    int mushrooms;
     Clans_v clans;
     Object* map;
 };
 
-static void draw         (Object, Pos);
-static void action       (Stollen, Dwarf, DwarfAction);
+static void action       (Stollen, Dwarf, Action);
 static void growMushrooms(Stollen);
 static Pos  getEmptyCell (Stollen);
 
@@ -51,7 +42,7 @@ Stollen StollenNew(int width, int height) {
     kv_init(this->clans);
     this->width  = width;
     this->height = height;
-    this->mushroomCnt = 0;
+    this->mushrooms = 0;
     this->map = calloc(width*height, sizeof(int));
     for(int i=0; i<width*height; i++) {
         this->map[i] = rand()%100>90 ? ROCK : EMPTY;
@@ -84,6 +75,7 @@ void StollenAddAI(Stollen this, int dwarfs_cnt) {
 }
 
 void StollenUpdate(Stollen this) {
+    growMushrooms(this);
     for(int i=0; i<this->clans.n; i++) {
         Clan clan = this->clans.a[i];
         for(int i=0; i<clan->dwarfs.n; i++) {
@@ -93,12 +85,8 @@ void StollenUpdate(Stollen this) {
     }
 }
 
-void StollenDraw(Stollen this) {
-    for(int y=0; y<this->height; y++) {
-        for(int x=0; x<this->width; x++) {
-            draw(this->map[y*this->width+x], (Pos){x,y});
-        }
-    }
+Object* StollenGetMap(Stollen this) {
+    return this->map;
 }
 
 // Static
@@ -131,28 +119,27 @@ static void move(Stollen this, Dwarf dwarf, int dir) {
    }
 }
 
-/*
-static void eat(Stollen this, Dwarf dwarf) {
-    Pos d = DwarfGetPos(dwarf);
-    Pos n = getNearObject(this, d, MUSHROOM);
-    if(n.x>=0) {
-       this->map[n.x+n.y*this->width] = EMPTY;
-       DwarfEat(dwarf, 20);
-    }
-}
-*/
 
-static void get(Stollen this, Dwarf dwarf) {}
+static void get(Stollen this, Dwarf dwarf) {
+   Pos pos = DwarfGetPos(dwarf);
+   Pos n = getNearObject(this, pos, MUSHROOM);
+   if(n.x>=0) {
+       this->map[n.x+n.y*this->width] = EMPTY;
+       DwarfAddMushrooms(dwarf, rand()%3);
+       this->mushrooms--;
+   }
+}
+static void put(Stollen this, Dwarf dwarf) {}
 static void fight(Stollen this, Dwarf dwarf) {}
 static void dig(Stollen this, Dwarf dwarf) {
-   Pos d = DwarfGetPos(dwarf);
-   Pos n = getNearObject(this, d, ROCK);
+   Pos pos = DwarfGetPos(dwarf);
+   Pos n = getNearObject(this, pos, ROCK);
    if(n.x>=0) {
        this->map[n.x+n.y*this->width] = EMPTY;
    }
 }
 
-static void action(Stollen this, Dwarf dwarf, DwarfAction action){
+static void action(Stollen this, Dwarf dwarf, Action action){
     switch(action) {
         case NONE: break;
         case REST: break;
@@ -166,6 +153,8 @@ static void action(Stollen this, Dwarf dwarf, DwarfAction action){
         case GET:
             get(this, dwarf);
             break;
+        case PUT:
+            put(this, dwarf);
         case FIGHT:
             fight(this, dwarf);
             break;
@@ -173,25 +162,6 @@ static void action(Stollen this, Dwarf dwarf, DwarfAction action){
             dig(this, dwarf);
             break;
     }
-}
-
-static void draw(Object sprite, Pos pos) {
-    Rectangle src;
-    switch(sprite) {
-        case EMPTY:
-            src = (Rectangle){32,32,16,16};
-            break;
-        case ROCK:
-            src = (Rectangle){ 0,32,16,16};
-            break;
-        case MUSHROOM:
-            src = (Rectangle){16,32,16,16};
-            break;
-        case DWARF:
-            src = (Rectangle){32,16,16,16};
-            break;
-    }
-    DrawTextureRec(sprites, src, (Vector2){pos.x*16, pos.y*16}, WHITE);
 }
 
 static Pos getEmptyCell(Stollen this) {
@@ -207,13 +177,13 @@ static Pos getEmptyCell(Stollen this) {
         }
     }
     // can not find empty cell
-    return (Pos){-1,-1};
+    return (Pos){-1, -1};
 }
 
 static void growMushrooms(Stollen this) {
-    while(this->mushroomCnt < MAX_MUSHROOMS) {
+    while(this->mushrooms < MAX_MUSHROOMS) {
         Pos p = getEmptyCell(this);
         this->map[p.y*this->width+p.x] = MUSHROOM;
-        this->mushroomCnt++;
+        this->mushrooms++;
     }
 }

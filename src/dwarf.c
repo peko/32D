@@ -9,7 +9,7 @@ struct Dwarf {
     int health;
     int energy;
     int satiety;
-    int mushroomCnt;
+    int mushrooms;
     Ai  ai;
 };
 
@@ -25,15 +25,6 @@ static int actionCosts[][3] = {
     {-5,-5,-5}, // DIG
 };
 
-static char* actionNames[] = {
-    "None",
-    "Resting",
-    "Eating",
-    "N","E","S","W",
-    "Fighting",
-    "Digging",
-};
-
 // forward declaration for static helpers
 static unsigned int enemyDistance(Dwarf his);
 static unsigned int getEvents(Dwarf this);
@@ -45,7 +36,7 @@ Dwarf DwarfNew(Pos pos) {
     this->health      = 100;
     this->energy      = 100;
     this->satiety     = 100;
-    this->mushroomCnt =   3;
+    this->mushrooms =   3;
     return this;
 }
 
@@ -54,11 +45,11 @@ void DwarfFree(Dwarf this) {
     free(this);
 }
 
-DwarfAction DwarfUpdate(Dwarf this) {
+Action DwarfUpdate(Dwarf this) {
     
     // State machine update
 
-    DwarfAction action = AiUpdate(this->ai, getEvents(this));
+    Action action = AiUpdate(this->ai, getEvents(this));
 
     this->health  += actionCosts[action][0];
     this->energy  += actionCosts[action][1];
@@ -66,9 +57,9 @@ DwarfAction DwarfUpdate(Dwarf this) {
 
     if(this->satiety < 0) this->health += this->satiety/10;
     if(action == EAT) {
-        if (this->mushroomCnt > 0) { 
-            this->satiety += 20; 
-            this->mushroomCnt--;
+        if (this->mushrooms > 0) { 
+            this->satiety += 100; 
+            this->mushrooms--;
             action = NONE;
         }
         action = GET;
@@ -82,10 +73,21 @@ DwarfAction DwarfUpdate(Dwarf this) {
     if(this->health  <   0) this->health  =   0;
     if(this->energy  <   0) this->energy  =   0;
     if(this->satiety < -20) this->satiety = -20;
+
+    static const char* actionNames[] = {
+        "None",
+        "Resting",
+        "Eating",
+        "Getting", "Putting",
+        "N","E","S","W",
+        "Fighting",
+        "Digging",
+    };
     printf("%4d %4d %4d : %3d %3d %3d : (%d) %s\n", 
         this->health, this->energy, this->satiety,
         actionCosts[action][0], actionCosts[action][1], actionCosts[action][2],
         action, actionNames[action]);
+
     return action;
 }
 
@@ -105,6 +107,11 @@ void DwarfEat(Dwarf this, int sat) {
     this->satiety += sat;
 }
 
+void DwarfAddMushrooms(Dwarf this, int cnt) {
+    this->mushrooms += cnt;
+    if(this->mushrooms < 0) this->mushrooms = 0;
+}
+
 // Static functions
 
 static DwarfEvents getEvents(Dwarf this) {
@@ -120,8 +127,8 @@ static DwarfEvents getEvents(Dwarf this) {
     if (this->energy  < 20) events |= TIRED;
     if (this->energy  > 80) events |= RESTED;
     
-    if (this->mushroomCnt == 0) events |= NO_FOOD;
-    if (this->mushroomCnt >= 5) events |= ENOUGH_FOOD;
+    if (this->mushrooms == 0) events |= NO_FOOD;
+    if (this->mushrooms >= 1) events |= ENOUGH_FOOD;
 
     if (enemyDistance(this) < 10) events |= ENEMY_NEAR;
     if (enemyDistance(this) > 20) events |= NO_ENEMIES;

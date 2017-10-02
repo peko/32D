@@ -1,4 +1,5 @@
 #pragma once
+
 typedef struct {int x, y;} Pos;
 
 typedef enum {
@@ -12,12 +13,11 @@ typedef enum {
     NONE,
     REST,
     EAT,
-    GET,
-    PUT,
+    GET, PUT,
     N, E, S, W,
     FIGHT,
     DIG
-} DwarfAction;
+} Action;
 
 enum DwarfEvent {
     ALIVE        = 1 <<  1,
