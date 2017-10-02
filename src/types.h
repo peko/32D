@@ -36,3 +36,9 @@ enum DwarfEvent {
     ENOUGH_FOOD  = 1 << 14,
 };
 typedef unsigned int DwarfEvents;
+
+typedef struct {
+   void*  (*new)();
+   void   (*free)(void*);
+   Action (*update)(void*, DwarfEvents);
+} Ai;

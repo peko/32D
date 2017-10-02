@@ -4,7 +4,7 @@
 #include "stollen.h"
 #include "dwarf.h"
 
-#define MAX_MUSHROOMS 20
+#define MAX_MUSHROOMS 100
 
 struct clan {
     Dwarfs_v dwarfs;

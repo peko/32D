@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "dwarf.h"
-#include "ai.h"
 
 struct Dwarf {
     Pos pos;
@@ -10,7 +9,7 @@ struct Dwarf {
     int energy;
     int satiety;
     int mushrooms;
-    Ai  ai;
+    void* ai;
 };
 
 static int actionCosts[][3] = {
@@ -29,9 +28,11 @@ static int actionCosts[][3] = {
 static unsigned int enemyDistance(Dwarf his);
 static unsigned int getEvents(Dwarf this);
 
+extern Ai SfsmAi;
+
 Dwarf DwarfNew(Pos pos) {
     Dwarf this = calloc(1, sizeof(struct Dwarf));
-    this->ai          = AiNew();
+    this->ai          = SfsmAi.new();
     this->pos         = pos;
     this->health      = 100;
     this->energy      = 100;
@@ -41,7 +42,7 @@ Dwarf DwarfNew(Pos pos) {
 }
 
 void DwarfFree(Dwarf this) {
-    AiFree(this->ai);
+    SfsmAi.free(this->ai);
     free(this);
 }
 
@@ -49,7 +50,7 @@ Action DwarfUpdate(Dwarf this) {
     
     // State machine update
 
-    Action action = AiUpdate(this->ai, getEvents(this));
+    Action action = SfsmAi.update(this->ai, getEvents(this));
 
     this->health  += actionCosts[action][0];
     this->energy  += actionCosts[action][1];

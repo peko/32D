@@ -11,5 +11,5 @@ add_executable(Stollen
     src/resources.c 
     src/stollen.c 
     src/dwarf.c 
-    src/ai.c)
+    src/sfsm_ai.c)
 link_with_raylib(Stollen)
