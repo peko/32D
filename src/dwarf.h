@@ -11,8 +11,9 @@ typedef enum {
     NONE,
     REST,
     EAT,
+    GET,
+    PUT,
     N, E, S, W,
-    HARVEST,
     FIGHT,
     DIG
 } DwarfAction;
@@ -30,6 +31,8 @@ enum DwarfEvent {
     FULL         = 1 << 10,
     TIRED        = 1 << 11,
     RESTED       = 1 << 12,
+    NO_FOOD      = 1 << 13,
+    ENOUGH_FOOD  = 1 << 14,
 };
 typedef unsigned int DwarfEvents;
 

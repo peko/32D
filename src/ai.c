@@ -2,58 +2,113 @@
 
 #include "ai.h"
 
-// completting type
-struct dwarfState {
-    DwarfAction action;
-    void (*update)(DwarfState, DwarfEvents);
+// http://c-faq.com/decl/recurfuncp.html
+typedef struct dwarfState {
+    DwarfAction (*update)(Ai, DwarfEvents);
+} DwarfState;
+
+struct ai {
+   kvec_t(DwarfState) states;
 };
 
 // Forward declaration of states
-static void eat    (DwarfState, DwarfEvents);
-static void dead   (DwarfState, DwarfEvents);
-static void rest   (DwarfState, DwarfEvents);
-static void fight  (DwarfState, DwarfEvents);
-static void avoid  (DwarfState, DwarfEvents);
-static void harvest(DwarfState, DwarfEvents);
+static DwarfAction alive  (Ai, DwarfEvents);
+static DwarfAction dead   (Ai, DwarfEvents);
+static DwarfAction eat    (Ai, DwarfEvents);
+static DwarfAction rest   (Ai, DwarfEvents);
+static DwarfAction fight  (Ai, DwarfEvents);
+static DwarfAction avoid  (Ai, DwarfEvents);
+static DwarfAction harvest(Ai, DwarfEvents);
 
-#define GOTO(action, state) (*this=(struct dwarfState){(action),(state)})
+static inline void AiPush(Ai, DwarfState);
+static inline void AiPop(Ai);
+static inline DwarfState* AiCurrentState(Ai);
 
-DwarfState StateNew() {
-    DwarfState this = calloc(1, sizeof(struct dwarfState));
-    GOTO(NONE, rest);
+#define PUSH_STATE(state) AiPush(this,(DwarfState){state})
+#define POP_STATE (AiPop(this))
+
+Ai AiNew() {
+    Ai this = calloc(1, sizeof(struct ai));
+    kv_init(this->states);
+    PUSH_STATE(alive);
     return this;
 }
 
-void StateFree(DwarfState this){
-    free(this);
+void AiFree(Ai this) {
+   kv_destroy(this->states);
+   free(this);
 }
 
-void StateUpdate(DwarfState this, DwarfEvents events) {
-    (*this->update)(this, events);
+static inline void AiPush(Ai this, DwarfState state) {
+    kv_push(DwarfState, this->states, state);
 }
 
-DwarfAction StateAction(DwarfState this) {
-    return this->action;
-} 
+static inline void AiPop(Ai this) {
+    if(this->states.n >= 0)this->states.n--;
+}
+
+static inline DwarfState* AiCurrentState(Ai this) {
+    return &this->states.a[this->states.n-1];
+}
+
+DwarfAction AiUpdate(Ai this, DwarfEvents e) {
+    if (this->states.n>0) {
+        DwarfState* state = AiCurrentState(this);
+        DwarfAction action = (*state->update)(this, e);
+        return action;
+    }
+    return NONE;
+}
+
 
 // Static
+static DwarfAction alive(Ai this, DwarfEvents e) {
+    printf("ALIVE\n");
+    if(e & DEAD) {
+        // clear stack
+        this->states.n = 0;
+        PUSH_STATE(dead);
+    }
 
-static void dead(DwarfState this, DwarfEvents e) {
+    if(e & HUNGRY) PUSH_STATE(eat);
+    if(e & ENEMY_NEAR) rand()%2 ? PUSH_STATE(avoid) : PUSH_STATE(fight);
+    if((e & TIRED) || (e & WOUNDED)) PUSH_STATE(rest);
+
+    return NONE;
 }
 
-static void rest(DwarfState this, DwarfEvents e) {
-    if(e & HUNGRY) GOTO(EAT, eat);
+static DwarfAction dead(Ai this, DwarfEvents e) {
+    printf("DEAD\n");
+    return NONE;
 }
 
-static void eat(DwarfState this, DwarfEvents e) {
-    if(e & FULL) GOTO(REST, rest);
+static DwarfAction rest(Ai this, DwarfEvents e) {
+    printf("REST\n");
+    if ((e & RESTED) && (e & HEALTHY)) POP_STATE;
+    return REST;
 }
 
-static void harvest(DwarfState this, DwarfEvents e) {
+static DwarfAction eat(Ai this, DwarfEvents e) {
+    printf("EAT\n");
+    if(e & FULL) POP_STATE;
+    if(e & NO_FOOD) PUSH_STATE(harvest);
+    return EAT;
 }
 
-static void avoid(DwarfState this, DwarfEvents e) {
+static DwarfAction harvest(Ai this, DwarfEvents e) {
+    printf("HARVEST\n");
+    if(e & ENOUGH_FOOD) POP_STATE;
+    return rand()%2 ? N : rand()%2 ? W : EAT;
 }
 
-static void fight(DwarfState this, DwarfEvents e) {
+static DwarfAction avoid(Ai this, DwarfEvents e) {
+    printf("AVOID\n");
+    if(NO_ENEMIES) POP_STATE;
+    return rand()%2? N : W;
+}
+
+static DwarfAction fight(Ai this, DwarfEvents e) {
+    printf("FIGHT\n");
+    if(NO_ENEMIES) POP_STATE;
+    return FIGHT;
 }

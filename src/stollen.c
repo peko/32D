@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "raylib.h"
-
 #include "resources.h"
 #include "stollen.h"
 #include "dwarf.h"
@@ -132,16 +131,18 @@ static void move(Stollen this, Dwarf dwarf, int dir) {
    }
 }
 
+/*
 static void eat(Stollen this, Dwarf dwarf) {
-   Pos d = DwarfGetPos(dwarf);
-   Pos n = getNearObject(this, d, MUSHROOM);
-   if(n.x>=0) {
+    Pos d = DwarfGetPos(dwarf);
+    Pos n = getNearObject(this, d, MUSHROOM);
+    if(n.x>=0) {
        this->map[n.x+n.y*this->width] = EMPTY;
        DwarfEat(dwarf, 20);
-   }
+    }
 }
+*/
 
-static void harvest(Stollen this, Dwarf dwarf) {}
+static void get(Stollen this, Dwarf dwarf) {}
 static void fight(Stollen this, Dwarf dwarf) {}
 static void dig(Stollen this, Dwarf dwarf) {
    Pos d = DwarfGetPos(dwarf);
@@ -153,17 +154,17 @@ static void dig(Stollen this, Dwarf dwarf) {
 
 static void action(Stollen this, Dwarf dwarf, DwarfAction action){
     switch(action) {
+        case NONE: break;
         case REST: break;
-        case EAT:
-            eat(this, dwarf);
+        case EAT:  break;
         case N:
         case E:
         case S:
         case W:
             move(this, dwarf, action-N);
             break;
-        case HARVEST:
-            harvest(this, dwarf);
+        case GET:
+            get(this, dwarf);
             break;
         case FIGHT:
             fight(this, dwarf);

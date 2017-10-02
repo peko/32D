@@ -2,11 +2,8 @@
 
 #include "dwarf.h"
 
-// http://c-faq.com/decl/recurfuncp.html
-typedef struct dwarfState* DwarfState;
+typedef struct ai* Ai;
+Ai AiNew();
+void AiFree(Ai);
 
-DwarfState StateNew();
-void StateFree(DwarfState);
-
-void StateUpdate(DwarfState, DwarfEvents);
-DwarfAction StateAction(DwarfState);
+DwarfAction AiUpdate(Ai, DwarfEvents);
