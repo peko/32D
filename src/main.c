@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include "raylib.h"
 
 #include "resources.h"
@@ -5,8 +7,8 @@
 
 int stollenWidth  = 32;
 int stollenHeight = 32;
-int screenWidth  = 32*16+256;
-int screenHeight = 32*16;
+int screenWidth   = 32*16+256;
+int screenHeight  = 32*16;
 
 static void stollenDraw(Stollen);
 static void objectDraw(Object, Pos);
@@ -19,12 +21,12 @@ int main() {
     Stollen stollen = StollenNew(stollenWidth, stollenHeight);
     StollenAddAI(stollen, 1);
 
-    SetTargetFPS(30);
+    // SetTargetFPS(30);
     while (!WindowShouldClose()) {
         
         // if(++i%10==0) 
         StollenUpdate(stollen);
-        
+    
         BeginDrawing();
         {
             ClearBackground(BLACK);
@@ -34,6 +36,7 @@ int main() {
             DrawFPS(screenWidth - 88, screenHeight - 28);  
         }
         EndDrawing();
+        usleep(20*1000);
     }
 
     CloseWindow();

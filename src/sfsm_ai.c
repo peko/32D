@@ -43,11 +43,12 @@ static void _free(void* this) {
 
 static Action _update(void* this, DwarfEvents events) {
     StateStack stack = this;
-    if(stack->n>=0) {
+    if(stack->n>0) {
         State currentState = stack->a[stack->n-1];
         Action action = (*currentState)(stack, events);
         return action;
     }
+    printf("State Stack is empty!");
     return NONE;
 }
 
