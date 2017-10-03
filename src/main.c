@@ -23,7 +23,7 @@ int main() {
     while (!WindowShouldClose()) {
         
         // if(++i%10==0) 
-        // StollenUpdate(stollen);
+        StollenUpdate(stollen);
         
         BeginDrawing();
         {
