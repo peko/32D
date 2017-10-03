@@ -4,3 +4,6 @@
 [submodule "dep/klib"]
 	path = dep/klib
 	url = https://github.com/attractivechaos/klib
+[submodule "dep/vector"]
+	path = dep/vector
+	url = https://github.com/peko/vector
