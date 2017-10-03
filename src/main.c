@@ -21,7 +21,7 @@ int main() {
     Stollen stollen = StollenNew(stollenWidth, stollenHeight);
     StollenAddAI(stollen, 1);
 
-    // SetTargetFPS(30);
+    SetTargetFPS(30);
     while (!WindowShouldClose()) {
         
         // if(++i%10==0) 
@@ -36,7 +36,7 @@ int main() {
             DrawFPS(screenWidth - 88, screenHeight - 28);  
         }
         EndDrawing();
-        usleep(20*1000);
+        // usleep(20*1000);
     }
 
     CloseWindow();
