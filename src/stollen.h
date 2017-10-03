@@ -11,3 +11,4 @@ void StollenAddAI(Stollen, int dwarfs_cnt);
 void StollenUpdate(Stollen);
 void StollenDraw(Stollen);
 Object* StollenGetMap(Stollen);
+void StollenGetStats(Stollen, char*);

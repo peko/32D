@@ -51,26 +51,18 @@ static Action _update(void* this, DwarfEvents events) {
     return NONE;
 }
 
-#define tab for(int i=0; i< stack->n; i++) printf("  ")
-
 static Action rest(StateStack stack, DwarfEvents e) {
-    tab;
-    printf("REST\n");
     if(e & HUNGRY) PUSH(eat);
     return REST;
 }
 
 static Action eat(StateStack stack, DwarfEvents e) {
-    tab;
-    printf("EAT\n");
     if(e & FULL) POP;
     if(e & NO_FOOD) PUSH(harvest);
     return EAT;
 }
 
 static Action harvest(StateStack stack, DwarfEvents e) {
-    tab;
-    printf("HARVEST\n");
     if(e & ENOUGH_FOOD) POP;
     return rand()%2?GET:rand()%3?N:rand()%3?E:rand()%2?S:W;
 }

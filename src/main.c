@@ -5,29 +5,31 @@
 
 int stollenWidth  = 32;
 int stollenHeight = 32;
-int screenWidth  = 32*16;
+int screenWidth  = 32*16+256;
 int screenHeight = 32*16;
 
 static void stollenDraw(Stollen);
 static void objectDraw(Object, Pos);
-
+static void statsDraw(Stollen);
 int main() {
 
     InitWindow(screenWidth, screenHeight, "Stollen");
     ResourcesInit();
     
     Stollen stollen = StollenNew(stollenWidth, stollenHeight);
-    StollenAddAI(stollen, 20);
+    StollenAddAI(stollen, 1);
 
-    SetTargetFPS(60);
+    SetTargetFPS(30);
     while (!WindowShouldClose()) {
-
-        StollenUpdate(stollen);
+        
+        // if(++i%10==0) 
+        // StollenUpdate(stollen);
         
         BeginDrawing();
         {
             ClearBackground(BLACK);
             stollenDraw(stollen);
+            statsDraw(stollen);
             DrawText("Stollen", 8, 8, 20, LIGHTGRAY);
             DrawFPS(screenWidth - 88, screenHeight - 28);  
         }
@@ -65,4 +67,11 @@ static void objectDraw(Object sprite, Pos pos) {
             break;
     }
     DrawTextureRec(sprites, src, (Vector2){pos.x*16, pos.y*16}, WHITE);
+}
+
+static void statsDraw(Stollen stollen) {
+    static char buffer[1024];
+    StollenGetStats(stollen, buffer);
+    // DrawText(buffer, 32*16+8, 8, 10, LIGHTGRAY);
+    DrawTextEx(font, buffer, (Vector2){32*16+8, 8}, font.baseSize, 1, LIGHTGRAY);
 }

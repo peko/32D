@@ -9,6 +9,7 @@ struct Dwarf {
     int energy;
     int satiety;
     int mushrooms;
+    Action action;
     void* ai;
 };
 
@@ -50,20 +51,20 @@ Action DwarfUpdate(Dwarf this) {
     
     // State machine update
 
-    Action action = SfsmAi.update(this->ai, getEvents(this));
+    this->action = SfsmAi.update(this->ai, getEvents(this));
 
-    this->health  += actionCosts[action][0];
-    this->energy  += actionCosts[action][1];
-    this->satiety += actionCosts[action][2];
+    this->health  += actionCosts[this->action][0];
+    this->energy  += actionCosts[this->action][1];
+    this->satiety += actionCosts[this->action][2];
 
     if(this->satiety < 0) this->health += this->satiety/10;
-    if(action == EAT) {
+    if(this->action == EAT) {
         if (this->mushrooms > 0) { 
             this->satiety += 100; 
             this->mushrooms--;
-            action = NONE;
+            this->action = NONE;
         }
-        action = GET;
+        this->action = GET;
     }
 
     // limit values
@@ -75,21 +76,7 @@ Action DwarfUpdate(Dwarf this) {
     if(this->energy  <   0) this->energy  =   0;
     if(this->satiety < -20) this->satiety = -20;
 
-    static const char* actionNames[] = {
-        "None",
-        "Resting",
-        "Eating",
-        "Getting", "Putting",
-        "N","E","S","W",
-        "Fighting",
-        "Digging",
-    };
-    printf("%4d %4d %4d : %3d %3d %3d : (%d) %s\n", 
-        this->health, this->energy, this->satiety,
-        actionCosts[action][0], actionCosts[action][1], actionCosts[action][2],
-        action, actionNames[action]);
-
-    return action;
+    return this->action;
 }
 
 float DwarfSatiety(Dwarf this) {
@@ -111,6 +98,23 @@ void DwarfEat(Dwarf this, int sat) {
 void DwarfAddMushrooms(Dwarf this, int cnt) {
     this->mushrooms += cnt;
     if(this->mushrooms < 0) this->mushrooms = 0;
+}
+
+static const char* actionNames[] = {
+    "None",
+    "Resting",
+    "Eating",
+    "Getting", "Putting",
+    "N","E","S","W",
+    "Fighting",
+    "Digging",
+};
+
+int DwarfGetStats(Dwarf this, char* buffer) {
+    return sprintf(buffer, "%4d %4d %4d\n%4d %4d %4d : (%d) %s\n", 
+        this->health, this->energy, this->satiety,
+        actionCosts[this->action][0], actionCosts[this->action][1], actionCosts[this->action][2],
+        this->action, actionNames[this->action]);
 }
 
 // Static functions

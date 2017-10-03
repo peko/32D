@@ -89,6 +89,17 @@ Object* StollenGetMap(Stollen this) {
     return this->map;
 }
 
+void StollenGetStats(Stollen this, char* buffer) {
+    int n = 0;
+    for(int i=0; i<this->clans.n; i++) {
+        Clan clan = this->clans.a[i];
+        for(int i=0; i<clan->dwarfs.n; i++) {
+            Dwarf d = clan->dwarfs.a[i];
+            n+= DwarfGetStats(d, &buffer[n]);
+        }
+    }
+}
+
 // Static
 
 static Pos getNearObject(Stollen this, Pos p, Object type) {

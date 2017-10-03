@@ -13,3 +13,4 @@ Pos DwarfGetPos(Dwarf);
 void DwarfSetPos(Dwarf, Pos);
 void DwarfEat(Dwarf, int);
 void DwarfAddMushrooms(Dwarf, int);
+int DwarfGetStats(Dwarf, char*);
