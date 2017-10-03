@@ -13,3 +13,9 @@ add_executable(Stollen
     src/dwarf.c 
     src/sfsm_ai.c)
 link_with_raylib(Stollen)
+
+add_executable(test_tty
+    src/test_tty.c 
+    src/stollen.c 
+    src/dwarf.c 
+    src/sfsm_ai.c)
